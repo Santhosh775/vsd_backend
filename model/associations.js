@@ -6,6 +6,7 @@ const Supplier = require('./supplierModel');
 const ThirdParty = require('./thirdPartyModel');
 const Vendor = require('./vendorModel');
 const Driver = require('./driverModel');
+const Labour = require('./labourModel');
 
 // Category - Product relationship
 Category.hasMany(Product, { 
@@ -42,4 +43,5 @@ module.exports = {
     ThirdParty,
     Vendor,
     Driver,
+    Labour
 };

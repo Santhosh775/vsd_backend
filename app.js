@@ -13,7 +13,7 @@ app.use(globalLimiter);
 
 app.use(cors(
     {
-        origin: 'https://18.60.117.207',
+        origin: 'http://localhost:5173',
         methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true
@@ -45,6 +45,12 @@ const thirdPartyRoute = require('./router/thirdPartyRoute');
 const vendorRoute = require('./router/vendorRoute');
 const driverRoute = require('./router/driverRoute');
 const labourRoute = require('./router/labourRoute');
+const advancePayRoute = require('./router/advancePayRoute');
+const driverAttendance = require('./router/driverAttendanceRoute');
+const excessKM = require('./router/excessKmRoute');
+const fuelExpense = require('./router/fuelexpenseRoute');
+const remark = require('./router/remarkRoute');
+
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
 // });
@@ -57,6 +63,11 @@ app.use('/api/v1/thirdparty', thirdPartyRoute);
 app.use('/api/v1/vendor', vendorRoute);
 app.use('/api/v1/driver', driverRoute);
 app.use('/api/v1/labour', labourRoute);
+app.use('/api/v1/advance-pay', advancePayRoute);
+app.use('/api/v1/driver-attendance', driverAttendance);
+app.use('/api/v1/excess-km', excessKM);
+app.use('/api/v1/fuel-expense', fuelExpense);
+app.use('/api/v1/remark', remark);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

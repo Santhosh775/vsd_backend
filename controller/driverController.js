@@ -30,6 +30,12 @@ const generateDriverId = async () => {
 // Create a new driver
 exports.createDriver = async (req, res) => {
     try {
+        // Convert date format if needed
+        if (req.body.insurance_expiry_date && req.body.insurance_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.insurance_expiry_date.split('/');
+            req.body.insurance_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        
         // Generate driver ID if not provided
         if (!req.body.driver_id) {
             req.body.driver_id = await generateDriverId();
@@ -192,6 +198,12 @@ exports.getDriverById = async (req, res) => {
 // Update driver by ID
 exports.updateDriver = async (req, res) => {
     try {
+        // Convert date format if needed
+        if (req.body.insurance_expiry_date && req.body.insurance_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.insurance_expiry_date.split('/');
+            req.body.insurance_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        
         const driver = await Driver.findByPk(req.params.id);
         
         if (!driver) {

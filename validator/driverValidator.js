@@ -96,8 +96,8 @@ exports.validateDriver = [
     body('delivery_type')
         .notEmpty()
         .withMessage('Delivery type is required')
-        .isIn(['Collection Delivery', 'Airport Delivery', 'Both Types'])
-        .withMessage('Delivery type must be Collection Delivery, Airport Delivery, or Both Types'),
+        .isIn(['Local Pickups', 'Line Airport', 'Both Types'])
+        .withMessage('Delivery type must be Local Pickups, Line Airport, or Both Types'),
 
     body('status')
         .optional()
@@ -108,16 +108,6 @@ exports.validateDriver = [
         .optional()
         .isBoolean()
         .withMessage('is_active must be a boolean value'),
-
-    body('rating')
-        .optional()
-        .isFloat({ min: 0, max: 5 })
-        .withMessage('Rating must be between 0 and 5'),
-
-    body('working_hours')
-        .optional()
-        .isFloat({ min: 0, max: 24 })
-        .withMessage('Working hours must be between 0 and 24'),
 
     body('total_deliveries')
         .optional()
@@ -210,8 +200,8 @@ exports.validateDriverUpdate = [
 
     body('delivery_type')
         .optional()
-        .isIn(['Collection Delivery', 'Airport Delivery', 'Both Types'])
-        .withMessage('Delivery type must be Collection Delivery, Airport Delivery, or Both Types'),
+        .isIn(['Local Pickups', 'Line Airport', 'Both Types'])
+        .withMessage('Delivery type must be Local Pickups, Line Airport, or Both Types'),
 
     body('status')
         .optional()

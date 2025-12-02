@@ -53,6 +53,10 @@ const Driver = sequelize.define('Driver', {
         allowNull: false,
         unique: true
     },
+    license_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
     vehicle_type: {
         type: DataTypes.STRING,
         allowNull: false
@@ -89,10 +93,18 @@ const Driver = sequelize.define('Driver', {
         allowNull: true,
         comment: 'Pollution certificate number'
     },
+    pollution_certificate_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
     ka_permit: {
         type: DataTypes.STRING,
         allowNull: true,
         comment: 'KA permit number'
+    },
+    ka_permit_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
     },
     delivery_type: {
         type: DataTypes.ENUM('Local Pickups', 'Line Airport', 'Both Types'),
@@ -122,33 +134,6 @@ const Driver = sequelize.define('Driver', {
         allowNull: false,
         defaultValue: true,
         comment: 'Driver Status toggle (Active/Inactive)'
-    },
-    login_time: {
-        type: DataTypes.DATE,
-        allowNull: true
-    },
-    logout_time: {
-        type: DataTypes.DATE,
-        allowNull: true
-    },
-    attendance_status: {
-        type: DataTypes.ENUM('Present', 'Absent'),
-        allowNull: false,
-        defaultValue: 'Present'
-    },
-    working_hours: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
-        defaultValue: 0.00
-    },
-    rating: {
-        type: DataTypes.DECIMAL(3, 2),
-        allowNull: true,
-        defaultValue: 0.00,
-        validate: {
-            min: 0.00,
-            max: 5.00
-        }
     },
     total_deliveries: {
         type: DataTypes.INTEGER,

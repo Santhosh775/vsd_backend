@@ -35,6 +35,18 @@ exports.createDriver = async (req, res) => {
             const [month, day, year] = req.body.insurance_expiry_date.split('/');
             req.body.insurance_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         }
+        if (req.body.license_expiry_date && req.body.license_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.license_expiry_date.split('/');
+            req.body.license_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        if (req.body.pollution_certificate_expiry_date && req.body.pollution_certificate_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.pollution_certificate_expiry_date.split('/');
+            req.body.pollution_certificate_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        if (req.body.ka_permit_expiry_date && req.body.ka_permit_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.ka_permit_expiry_date.split('/');
+            req.body.ka_permit_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
         
         // Generate driver ID if not provided
         if (!req.body.driver_id) {
@@ -202,6 +214,18 @@ exports.updateDriver = async (req, res) => {
         if (req.body.insurance_expiry_date && req.body.insurance_expiry_date.includes('/')) {
             const [month, day, year] = req.body.insurance_expiry_date.split('/');
             req.body.insurance_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        if (req.body.license_expiry_date && req.body.license_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.license_expiry_date.split('/');
+            req.body.license_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        if (req.body.pollution_certificate_expiry_date && req.body.pollution_certificate_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.pollution_certificate_expiry_date.split('/');
+            req.body.pollution_certificate_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        if (req.body.ka_permit_expiry_date && req.body.ka_permit_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.ka_permit_expiry_date.split('/');
+            req.body.ka_permit_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         }
         
         const driver = await Driver.findByPk(req.params.id);
@@ -474,36 +498,6 @@ exports.updateDriverStatus = async (req, res) => {
     }
 };
 
-// Update working hours
-exports.updateWorkingHours = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { working_hours } = req.body;
-        
-        const driver = await Driver.findByPk(id);
-        
-        if (!driver) {
-            return res.status(404).json({
-                success: false,
-                message: 'Driver not found'
-            });
-        }
-        
-        await driver.update({ working_hours: working_hours });
-        
-        res.status(200).json({
-            success: true,
-            message: 'Working hours updated successfully',
-            data: { working_hours: driver.working_hours }
-        });
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'Error updating working hours',
-            error: error.message
-        });
-    }
-};
 
 // Toggle driver active status
 exports.toggleDriverStatus = async (req, res) => {

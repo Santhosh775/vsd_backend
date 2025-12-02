@@ -90,30 +90,4 @@ router.delete('/:id',
     driverController.deleteDriver
 );
 
-// Attendance routes
-router.get('/attendance/list', 
-    authMiddleware, 
-    driverController.getDriverAttendance
-);
-
-router.patch('/:id/check-in', 
-    authMiddleware, 
-    driverController.markCheckIn
-);
-
-router.patch('/:id/check-out', 
-    authMiddleware, 
-    driverController.markCheckOut
-);
-
-router.patch('/:id/mark-present', 
-    authMiddleware, 
-    driverController.markPresent
-);
-
-router.patch('/:id/mark-absent', 
-    authMiddleware, 
-    driverController.markAbsent
-);
-
 module.exports = router;

@@ -10,6 +10,13 @@ const {
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { uploadDriver } = require('../middleware/upload');
 
+// Driver login (Public route)
+router.post('/login', driverController.driverLogin);
+
+// Get driver profile by ID (Driver can access their own profile)
+router.get('/profile/:id', driverController.driverProfile);
+
+
 // Create a new driver (Admin only)
 router.post('/create', 
     authMiddleware, 

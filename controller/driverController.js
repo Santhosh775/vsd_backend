@@ -1,6 +1,7 @@
 const Driver = require('../model/driverModel');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // Function to generate driver ID with sequential numbering
 const generateDriverId = async () => {
@@ -526,6 +527,91 @@ exports.toggleDriverStatus = async (req, res) => {
         res.status(400).json({
             success: false,
             message: 'Error toggling driver status',
+            error: error.message
+        });
+    }
+};
+
+// Driver login
+exports.driverLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and password are required' 
+            });
+        }
+        
+        const driver = await Driver.findOne({ where: { email } });
+        
+        if (!driver) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid email' 
+            });
+        }
+        
+        const isMatch = await bcrypt.compare(password, driver.password);
+        
+        if (!isMatch) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid password' 
+            });
+        }
+        
+        const token = jwt.sign({ 
+            did: driver.did,
+            driver_id: driver.driver_id,
+            email: driver.email
+        }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        
+        res.status(200).json({ 
+            success: true, 
+            token,
+            data: {
+                did: driver.did,
+                driver_id: driver.driver_id,
+                driver_name: driver.driver_name,
+                email: driver.email
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error',
+            error: error.message
+        });
+    }
+};
+
+// Get driver profile
+exports.driverProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const driver = await Driver.findByPk(id, {
+            attributes: { exclude: ['password'] }
+        });
+        
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: 'Driver not found'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Driver profile retrieved successfully',
+            data: driver
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving driver profile',
             error: error.message
         });
     }

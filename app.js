@@ -13,7 +13,7 @@ app.use(globalLimiter);
 
 app.use(cors(
     {
-        origin: 'http://localhost:5173',
+        origin: 'https://18.60.117.207',
         methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true

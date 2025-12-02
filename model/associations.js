@@ -39,6 +39,22 @@ Product.belongsTo(Category, {
 // Note: This is a virtual relationship as product_list is stored as JSON in the third party model
 // We'll handle this relationship manually in the controller
 
+// Driver associations
+Driver.hasMany(AdvancePay, { foreignKey: 'driver_id', as: 'advancePayments' });
+AdvancePay.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
+
+Driver.hasMany(driverAttendance, { foreignKey: 'driver_id', as: 'attendanceHistory' });
+driverAttendance.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
+
+Driver.hasMany(excessKM, { foreignKey: 'driver_id', as: 'excessKMs' });
+excessKM.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
+
+Driver.hasMany(fuelExpense, { foreignKey: 'driver_id', as: 'fuelExpenses' });
+fuelExpense.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
+
+Driver.hasMany(remark, { foreignKey: 'driver_id', as: 'remarks' });
+remark.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
+
 module.exports = {
     Category,
     Product,

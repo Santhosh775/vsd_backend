@@ -63,15 +63,4 @@ const AttendanceHistory = sequelize.define('AttendanceHistory', {
     ]
 });
 
-// Define associations
-AttendanceHistory.belongsTo(Driver, {
-    foreignKey: 'driver_id',
-    as: 'driver'
-});
-
-Driver.hasMany(AttendanceHistory, {
-    foreignKey: 'driver_id',
-    as: 'attendanceHistory'
-});
-
 module.exports = AttendanceHistory;

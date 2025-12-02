@@ -53,15 +53,4 @@ const ExcessKM = sequelize.define('ExcessKM', {
     updatedAt: 'updated_at'
 });
 
-// Define associations
-ExcessKM.belongsTo(Driver, {
-    foreignKey: 'driver_id',
-    as: 'driver'
-});
-
-Driver.hasMany(ExcessKM, {
-    foreignKey: 'driver_id',
-    as: 'excessKMs'
-});
-
 module.exports = ExcessKM;

@@ -34,15 +34,4 @@ const AdvancePay = sequelize.define('AdvancePay', {
     updatedAt: 'updated_at'
 });
 
-// Define associations
-AdvancePay.belongsTo(Driver, {
-    foreignKey: 'driver_id',
-    as: 'driver'
-});
-
-Driver.hasMany(AdvancePay, {
-    foreignKey: 'driver_id',
-    as: 'advancePayments'
-});
-
 module.exports = AdvancePay;

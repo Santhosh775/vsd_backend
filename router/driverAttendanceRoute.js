@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const attendanceController = require('../controller/attendanceController');
+const attendanceController = require('../controller/driverAttendanceController');
 const { 
     validateCheckIn,
     validateCheckOut,

@@ -57,15 +57,4 @@ const FuelExpense = sequelize.define('FuelExpense', {
     updatedAt: 'updated_at'
 });
 
-// Define associations
-FuelExpense.belongsTo(Driver, {
-    foreignKey: 'driver_id',
-    as: 'driver'
-});
-
-Driver.hasMany(FuelExpense, {
-    foreignKey: 'driver_id',
-    as: 'fuelExpenses'
-});
-
 module.exports = FuelExpense;

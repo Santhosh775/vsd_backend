@@ -38,15 +38,4 @@ const Remark = sequelize.define('Remark', {
     updatedAt: 'updated_at'
 });
 
-// Define associations
-Remark.belongsTo(Driver, {
-    foreignKey: 'driver_id',
-    as: 'driver'
-});
-
-Driver.hasMany(Remark, {
-    foreignKey: 'driver_id',
-    as: 'remarks'
-});
-
 module.exports = Remark;

@@ -7,6 +7,11 @@ const ThirdParty = require('./thirdPartyModel');
 const Vendor = require('./vendorModel');
 const Driver = require('./driverModel');
 const Labour = require('./labourModel');
+const AdvancePay = require('./advancepayModel');
+const driverAttendance = require('./driverAttendanceModel');
+const excessKM = require('./excessKmModel');
+const fuelExpense = require('./fuelExpenseModel');
+const remark = require('./remarkModel')
 
 // Category - Product relationship
 Category.hasMany(Product, { 
@@ -43,5 +48,10 @@ module.exports = {
     ThirdParty,
     Vendor,
     Driver,
-    Labour
+    Labour,
+    AdvancePay,
+    driverAttendance,
+    excessKM,
+    fuelExpense,
+    remark
 };

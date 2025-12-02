@@ -1,4 +1,6 @@
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
+
+// ==================== DRIVER VALIDATORS ====================
 
 exports.validateDriver = [
     body('driver_name')
@@ -259,4 +261,355 @@ exports.validateWorkingHoursUpdate = [
         .withMessage('Working hours is required')
         .isFloat({ min: 0, max: 24 })
         .withMessage('Working hours must be between 0 and 24')
+];
+
+// ==================== FUEL EXPENSE VALIDATORS ====================
+
+exports.validateFuelExpense = [
+    body('driver_id')
+        .notEmpty()
+        .withMessage('Driver ID is required')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .notEmpty()
+        .withMessage('Date is required')
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('vehicle_number')
+        .notEmpty()
+        .withMessage('Vehicle number is required')
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
+
+    body('fuel_type')
+        .notEmpty()
+        .withMessage('Fuel type is required')
+        .isIn(['Petrol', 'Diesel'])
+        .withMessage('Fuel type must be Petrol or Diesel'),
+
+    body('petrol_bunk_name')
+        .notEmpty()
+        .withMessage('Petrol bunk name is required')
+        .isLength({ max: 100 })
+        .withMessage('Petrol bunk name must be less than 100 characters'),
+
+    body('unit_price')
+        .notEmpty()
+        .withMessage('Unit price is required')
+        .isFloat({ min: 0 })
+        .withMessage('Unit price must be a positive number'),
+
+    body('litre')
+        .notEmpty()
+        .withMessage('Litre is required')
+        .isFloat({ min: 0 })
+        .withMessage('Litre must be a positive number')
+];
+
+exports.validateFuelExpenseUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Fuel expense ID must be an integer'),
+
+    body('driver_id')
+        .optional()
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('vehicle_number')
+        .optional()
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
+
+    body('fuel_type')
+        .optional()
+        .isIn(['Petrol', 'Diesel'])
+        .withMessage('Fuel type must be Petrol or Diesel'),
+
+    body('petrol_bunk_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Petrol bunk name must be less than 100 characters'),
+
+    body('unit_price')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('Unit price must be a positive number'),
+
+    body('litre')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('Litre must be a positive number')
+];
+
+// ==================== EXCESS KM VALIDATORS ====================
+
+exports.validateExcessKM = [
+    body('driver_id')
+        .notEmpty()
+        .withMessage('Driver ID is required')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .notEmpty()
+        .withMessage('Date is required')
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('vehicle_number')
+        .notEmpty()
+        .withMessage('Vehicle number is required')
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
+
+    body('start_km')
+        .notEmpty()
+        .withMessage('Start KM is required')
+        .isFloat({ min: 0 })
+        .withMessage('Start KM must be a positive number'),
+
+    body('end_km')
+        .notEmpty()
+        .withMessage('End KM is required')
+        .isFloat({ min: 0 })
+        .withMessage('End KM must be a positive number'),
+
+    body('amount')
+        .notEmpty()
+        .withMessage('Amount is required')
+        .isFloat({ min: 0 })
+        .withMessage('Amount must be a positive number')
+];
+
+exports.validateExcessKMUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Excess KM ID must be an integer'),
+
+    body('driver_id')
+        .optional()
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('vehicle_number')
+        .optional()
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
+
+    body('start_km')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('Start KM must be a positive number'),
+
+    body('end_km')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('End KM must be a positive number'),
+
+    body('amount')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('Amount must be a positive number')
+];
+
+// ==================== ADVANCE PAY VALIDATORS ====================
+
+exports.validateAdvancePay = [
+    body('driver_id')
+        .notEmpty()
+        .withMessage('Driver ID is required')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .notEmpty()
+        .withMessage('Date is required')
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('advance_amount')
+        .notEmpty()
+        .withMessage('Advance amount is required')
+        .isFloat({ min: 0 })
+        .withMessage('Advance amount must be a positive number')
+];
+
+exports.validateAdvancePayUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Advance pay ID must be an integer'),
+
+    body('driver_id')
+        .optional()
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('advance_amount')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('Advance amount must be a positive number')
+];
+
+// ==================== REMARK VALIDATORS ====================
+
+exports.validateRemark = [
+    body('driver_id')
+        .notEmpty()
+        .withMessage('Driver ID is required')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .notEmpty()
+        .withMessage('Date is required')
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('vehicle_number')
+        .notEmpty()
+        .withMessage('Vehicle number is required')
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
+
+    body('remarks')
+        .notEmpty()
+        .withMessage('Remarks are required')
+        .isLength({ min: 1, max: 1000 })
+        .withMessage('Remarks must be between 1 and 1000 characters')
+];
+
+exports.validateRemarkUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Remark ID must be an integer'),
+
+    body('driver_id')
+        .optional()
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('vehicle_number')
+        .optional()
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
+
+    body('remarks')
+        .optional()
+        .isLength({ min: 1, max: 1000 })
+        .withMessage('Remarks must be between 1 and 1000 characters')
+];
+
+// ==================== ATTENDANCE VALIDATORS ====================
+
+exports.validateCheckIn = [
+    param('driver_id')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('time')
+        .optional()
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+        .withMessage('Time must be in HH:MM:SS format')
+];
+
+exports.validateCheckOut = [
+    param('driver_id')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('time')
+        .optional()
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+        .withMessage('Time must be in HH:MM:SS format')
+];
+
+exports.validateMarkAttendance = [
+    param('driver_id')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('remarks')
+        .optional()
+        .isLength({ max: 500 })
+        .withMessage('Remarks must be less than 500 characters')
+];
+
+exports.validateBulkMarkAttendance = [
+    body('driver_ids')
+        .notEmpty()
+        .withMessage('Driver IDs array is required')
+        .isArray()
+        .withMessage('Driver IDs must be an array')
+        .custom((value) => {
+            if (value.length === 0) {
+                throw new Error('Driver IDs array cannot be empty');
+            }
+            return true;
+        }),
+
+    body('driver_ids.*')
+        .isInt()
+        .withMessage('Each driver ID must be an integer'),
+
+    body('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
+
+    body('attendance_status')
+        .notEmpty()
+        .withMessage('Attendance status is required')
+        .isIn(['Present', 'Absent'])
+        .withMessage('Attendance status must be Present or Absent')
+];
+
+exports.validateAttendanceRemarks = [
+    param('attendance_id')
+        .isInt()
+        .withMessage('Attendance ID must be an integer'),
+
+    body('remarks')
+        .notEmpty()
+        .withMessage('Remarks are required')
+        .isLength({ min: 1, max: 500 })
+        .withMessage('Remarks must be between 1 and 500 characters')
 ];

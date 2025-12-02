@@ -13,7 +13,7 @@ app.use(globalLimiter);
 
 app.use(cors(
     {
-        origin: '*',
+        origin: 'http://localhost:5173',
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true
@@ -44,6 +44,7 @@ const supplierRoute = require('./router/supplierRoute');
 const thirdPartyRoute = require('./router/thirdPartyRoute');
 const vendorRoute = require('./router/vendorRoute');
 const driverRoute = require('./router/driverRoute');
+const labourRoute = require('./router/labourRoute');
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
 // });
@@ -55,6 +56,7 @@ app.use('/api/v1/supplier', supplierRoute);
 app.use('/api/v1/thirdparty', thirdPartyRoute);
 app.use('/api/v1/vendor', vendorRoute);
 app.use('/api/v1/driver', driverRoute);
+app.use('/api/v1/labour', labourRoute);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

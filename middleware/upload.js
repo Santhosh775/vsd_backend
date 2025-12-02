@@ -91,6 +91,11 @@ const uploadDriver = multer({
     fileFilter: imageFilter,
     limits: { fileSize: 10 * 1024 * 1024 }
 });
+const uploadLabour = multer({
+    storage: createStorage('labours', 'labour'),
+    fileFilter: imageFilter,
+    limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 module.exports = {
     uploadCategory,
@@ -101,5 +106,6 @@ module.exports = {
     uploadSupplier,
     uploadThirdParty,
     uploadVendor,
-    uploadDriver
+    uploadDriver,
+    uploadLabour
 };

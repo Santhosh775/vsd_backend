@@ -89,7 +89,7 @@ const uploadVendor = multer({
 const uploadDriver = multer({
     storage: createStorage('drivers', 'driver'),
     fileFilter: imageFilter,
-    limits: { fileSize: 10 * 1024 * 1024 }
+    limits: { fileSize: 20 * 1024 * 1024 }
 });
 const uploadLabour = multer({
     storage: createStorage('labours', 'labour'),

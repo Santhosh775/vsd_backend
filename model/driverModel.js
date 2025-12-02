@@ -57,6 +57,11 @@ const Driver = sequelize.define('Driver', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    available_vehicle: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        comment: 'Specific vehicle name/model assigned to driver'
+    },
     vehicle_number: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -79,22 +84,44 @@ const Driver = sequelize.define('Driver', {
         type: DataTypes.DATEONLY,
         allowNull: true
     },
+    pollution_certificate: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Pollution certificate number'
+    },
+    ka_permit: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'KA permit number'
+    },
     delivery_type: {
-        type: DataTypes.ENUM('Collection Delivery', 'Airport Delivery', 'Both Types'),
-        allowNull: false
+        type: DataTypes.ENUM('Local Pickups', 'Line Airport', 'Both Types'),
+        allowNull: false,
     },
     driver_image: {
         type: DataTypes.STRING,
         allowNull: true
     },
+    license_image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload License Image'
+    },
     driver_id_proof: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: true,
+        comment: 'Upload ID Proof'
     },
     status: {
         type: DataTypes.ENUM('Available', 'On Trip', 'Break', 'Inactive'),
         allowNull: false,
         defaultValue: 'Available'
+    },
+    is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+        comment: 'Driver Status toggle (Active/Inactive)'
     },
     login_time: {
         type: DataTypes.DATE,
@@ -103,6 +130,11 @@ const Driver = sequelize.define('Driver', {
     logout_time: {
         type: DataTypes.DATE,
         allowNull: true
+    },
+    attendance_status: {
+        type: DataTypes.ENUM('Present', 'Absent'),
+        allowNull: false,
+        defaultValue: 'Present'
     },
     working_hours: {
         type: DataTypes.DECIMAL(10, 2),

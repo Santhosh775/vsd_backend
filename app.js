@@ -26,7 +26,7 @@ require('./model/associations');
 
 // Sync database
 connectDB().then(() => {
-    sequelize.sync({ alter: true }).then(() => {
+    sequelize.sync({ alter: false }).then(() => {
         console.log('Database synced');
     }).catch((err) => {
         console.error('Error syncing database:', err);

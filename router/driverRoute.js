@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const driverController = require('../controller/driverController');
-const { validateDriver, validateDriverUpdate } = require('../validator/driverValidator');
+const { 
+    validateDriver, 
+    validateDriverUpdate,
+    validateDriverStatusUpdate,
+    validateWorkingHoursUpdate
+} = require('../validator/driverValidator');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { uploadDriver } = require('../middleware/upload');
 
@@ -10,6 +15,7 @@ router.post('/create',
     authMiddleware, 
     uploadDriver.fields([
         { name: 'driver_image', maxCount: 1 },
+        { name: 'license_image', maxCount: 1 },
         { name: 'driver_id_proof', maxCount: 1 }
     ]),
     validateDriver,
@@ -20,29 +26,6 @@ router.post('/create',
 router.get('/list', 
     authMiddleware, 
     driverController.getAllDrivers
-);
-
-// Get driver by ID (Admin only)
-router.get('/:id', 
-    authMiddleware, 
-    driverController.getDriverById
-);
-
-// Update driver by ID (Admin only)
-router.put('/:id', 
-    authMiddleware, 
-    uploadDriver.fields([
-        { name: 'driver_image', maxCount: 1 },
-        { name: 'driver_id_proof', maxCount: 1 }
-    ]),
-    validateDriverUpdate,
-    driverController.updateDriver
-);
-
-// Delete driver by ID (Admin only)
-router.delete('/:id', 
-    authMiddleware, 
-    driverController.deleteDriver
 );
 
 // Search drivers (Admin only)
@@ -63,16 +46,74 @@ router.get('/status/:status',
     driverController.getDriversByStatus
 );
 
+// Get driver by ID (Admin only)
+router.get('/:id', 
+    authMiddleware, 
+    driverController.getDriverById
+);
+
+// Update driver by ID (Admin only)
+router.put('/:id', 
+    authMiddleware, 
+    uploadDriver.fields([
+        { name: 'driver_image', maxCount: 1 },
+        { name: 'license_image', maxCount: 1 },
+        { name: 'driver_id_proof', maxCount: 1 }
+    ]),
+    validateDriverUpdate,
+    driverController.updateDriver
+);
+
 // Update driver status (Admin only)
 router.patch('/:id/status', 
-    authMiddleware, 
+    authMiddleware,
+    validateDriverStatusUpdate,
     driverController.updateDriverStatus
 );
 
 // Update working hours (Admin only)
 router.patch('/:id/working-hours', 
-    authMiddleware, 
+    authMiddleware,
+    validateWorkingHoursUpdate,
     driverController.updateWorkingHours
+);
+
+// Toggle driver active/inactive status (Admin only)
+router.patch('/:id/toggle-status', 
+    authMiddleware,
+    driverController.toggleDriverStatus
+);
+
+// Delete driver by ID (Admin only)
+router.delete('/:id', 
+    authMiddleware, 
+    driverController.deleteDriver
+);
+
+// Attendance routes
+router.get('/attendance/list', 
+    authMiddleware, 
+    driverController.getDriverAttendance
+);
+
+router.patch('/:id/check-in', 
+    authMiddleware, 
+    driverController.markCheckIn
+);
+
+router.patch('/:id/check-out', 
+    authMiddleware, 
+    driverController.markCheckOut
+);
+
+router.patch('/:id/mark-present', 
+    authMiddleware, 
+    driverController.markPresent
+);
+
+router.patch('/:id/mark-absent', 
+    authMiddleware, 
+    driverController.markAbsent
 );
 
 module.exports = router;

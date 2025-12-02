@@ -10,11 +10,11 @@ exports.validateDriver = [
     body('phone_number')
         .notEmpty()
         .withMessage('Phone number is required')
-        .matches(/^\+?[0-9]{10,12}$/)
-        .withMessage('Phone number must be 10-12 digits'),
+        .matches(/^\+?[0-9]{10,15}$/)
+        .withMessage('Phone number must be 10-15 digits'),
 
     body('email')
-        .optional()
+        .optional({ checkFalsy: true })
         .isEmail()
         .withMessage('Must be a valid email'),
 
@@ -45,17 +45,22 @@ exports.validateDriver = [
     body('license_number')
         .notEmpty()
         .withMessage('License number is required')
-        .isLength({ min: 10, max: 15 })
-        .withMessage('License number must be 10-15 characters'),
+        .isLength({ min: 8, max: 20 })
+        .withMessage('License number must be 8-20 characters'),
 
     body('vehicle_type')
-        .notEmpty(),
+        .notEmpty()
+        .withMessage('Vehicle type is required'),
+
+    body('available_vehicle')
+        .notEmpty()
+        .withMessage('Available vehicle is required'),
 
     body('vehicle_number')
         .notEmpty()
         .withMessage('Vehicle number is required')
-        .matches(/^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/)
-        .withMessage('Invalid vehicle number format (e.g., TN01AB1234)'),
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
 
     body('vehicle_condition')
         .optional()
@@ -67,14 +72,24 @@ exports.validateDriver = [
         .withMessage('Capacity is required'),
 
     body('insurance_number')
-        .optional()
+        .optional({ checkFalsy: true })
         .isLength({ max: 50 })
         .withMessage('Insurance number must be less than 50 characters'),
 
     body('insurance_expiry_date')
-        .optional()
-        .isISO8601()
-        .withMessage('Invalid insurance expiry date format'),
+        .optional({ checkFalsy: true })
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Insurance expiry date must be in YYYY-MM-DD format'),
+
+    body('pollution_certificate')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 50 })
+        .withMessage('Pollution certificate must be less than 50 characters'),
+
+    body('ka_permit')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 50 })
+        .withMessage('KA permit must be less than 50 characters'),
 
     body('delivery_type')
         .notEmpty()
@@ -86,6 +101,11 @@ exports.validateDriver = [
         .optional()
         .isIn(['Available', 'On Trip', 'Break', 'Inactive'])
         .withMessage('Status must be Available, On Trip, Break, or Inactive'),
+
+    body('is_active')
+        .optional()
+        .isBoolean()
+        .withMessage('is_active must be a boolean value'),
 
     body('rating')
         .optional()
@@ -115,11 +135,11 @@ exports.validateDriverUpdate = [
 
     body('phone_number')
         .optional()
-        .matches(/^\+?[0-9]{10,12}$/)
-        .withMessage('Phone number must be 10-12 digits'),
+        .matches(/^\+?[0-9]{10,15}$/)
+        .withMessage('Phone number must be 10-15 digits'),
 
     body('email')
-        .optional()
+        .optional({ checkFalsy: true })
         .isEmail()
         .withMessage('Must be a valid email'),
 
@@ -144,16 +164,19 @@ exports.validateDriverUpdate = [
 
     body('license_number')
         .optional()
-        .isLength({ min: 10, max: 15 })
-        .withMessage('License number must be 10-15 characters'),
+        .isLength({ min: 8, max: 20 })
+        .withMessage('License number must be 8-20 characters'),
 
     body('vehicle_type')
         .optional(),
 
+    body('available_vehicle')
+        .optional(),
+
     body('vehicle_number')
         .optional()
-        .matches(/^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/)
-        .withMessage('Invalid vehicle number format (e.g., TN01AB1234)'),
+        .isLength({ min: 5, max: 15 })
+        .withMessage('Vehicle number must be 5-15 characters'),
 
     body('vehicle_condition')
         .optional()
@@ -164,14 +187,24 @@ exports.validateDriverUpdate = [
         .optional(),
 
     body('insurance_number')
-        .optional()
+        .optional({ checkFalsy: true })
         .isLength({ max: 50 })
         .withMessage('Insurance number must be less than 50 characters'),
 
     body('insurance_expiry_date')
-        .optional()
-        .isISO8601()
-        .withMessage('Invalid insurance expiry date format'),
+        .optional({ checkFalsy: true })
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Insurance expiry date must be in YYYY-MM-DD format'),
+
+    body('pollution_certificate')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 50 })
+        .withMessage('Pollution certificate must be less than 50 characters'),
+
+    body('ka_permit')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 50 })
+        .withMessage('KA permit must be less than 50 characters'),
 
     body('delivery_type')
         .optional()
@@ -182,6 +215,11 @@ exports.validateDriverUpdate = [
         .optional()
         .isIn(['Available', 'On Trip', 'Break', 'Inactive'])
         .withMessage('Status must be Available, On Trip, Break, or Inactive'),
+
+    body('is_active')
+        .optional()
+        .isBoolean()
+        .withMessage('is_active must be a boolean value'),
 
     body('rating')
         .optional()
@@ -197,4 +235,28 @@ exports.validateDriverUpdate = [
         .optional()
         .isInt({ min: 0 })
         .withMessage('Total deliveries must be a non-negative integer')
+];
+
+exports.validateDriverStatusUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('status')
+        .notEmpty()
+        .withMessage('Status is required')
+        .isIn(['Available', 'On Trip', 'Break', 'Inactive'])
+        .withMessage('Status must be Available, On Trip, Break, or Inactive')
+];
+
+exports.validateWorkingHoursUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Driver ID must be an integer'),
+
+    body('working_hours')
+        .notEmpty()
+        .withMessage('Working hours is required')
+        .isFloat({ min: 0, max: 24 })
+        .withMessage('Working hours must be between 0 and 24')
 ];

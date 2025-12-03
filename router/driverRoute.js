@@ -78,12 +78,6 @@ router.patch('/:id/status',
     driverController.updateDriverStatus
 );
 
-// Update working hours (Admin only)
-router.patch('/:id/working-hours', 
-    authMiddleware,
-    validateWorkingHoursUpdate,
-    driverController.updateWorkingHours
-);
 
 // Toggle driver active/inactive status (Admin only)
 router.patch('/:id/toggle-status', 

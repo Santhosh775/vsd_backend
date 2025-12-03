@@ -38,12 +38,6 @@ const AttendanceHistory = sequelize.define('AttendanceHistory', {
         allowNull: false,
         defaultValue: 'Not Marked'
     },
-    working_hours: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
-        defaultValue: 0.00,
-        comment: 'Total working hours for the day'
-    },
     remarks: {
         type: DataTypes.TEXT,
         allowNull: true,

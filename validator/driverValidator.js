@@ -218,11 +218,6 @@ exports.validateDriverUpdate = [
         .isFloat({ min: 0, max: 5 })
         .withMessage('Rating must be between 0 and 5'),
 
-    body('working_hours')
-        .optional()
-        .isFloat({ min: 0, max: 24 })
-        .withMessage('Working hours must be between 0 and 24'),
-
     body('total_deliveries')
         .optional()
         .isInt({ min: 0 })
@@ -239,18 +234,6 @@ exports.validateDriverStatusUpdate = [
         .withMessage('Status is required')
         .isIn(['Available', 'On Trip', 'Break', 'Inactive'])
         .withMessage('Status must be Available, On Trip, Break, or Inactive')
-];
-
-exports.validateWorkingHoursUpdate = [
-    param('id')
-        .isInt()
-        .withMessage('Driver ID must be an integer'),
-
-    body('working_hours')
-        .notEmpty()
-        .withMessage('Working hours is required')
-        .isFloat({ min: 0, max: 24 })
-        .withMessage('Working hours must be between 0 and 24')
 ];
 
 // ==================== FUEL EXPENSE VALIDATORS ====================

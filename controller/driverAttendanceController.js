@@ -56,7 +56,6 @@ exports.getAttendanceOverview = async (req, res) => {
                 check_in_time: attendance?.check_in_time || null,
                 check_out_time: attendance?.check_out_time || null,
                 attendance_status: attendance?.attendance_status || 'Not Marked',
-                working_hours: attendance?.working_hours || 0.00,
                 attendance_id: attendance?.id || null
             };
         });
@@ -198,21 +197,14 @@ exports.markCheckOut = async (req, res) => {
             });
         }
         
-        // Calculate working hours
-        const checkIn = new Date(`${attendanceDate} ${attendance.check_in_time}`);
-        const checkOut = new Date(`${attendanceDate} ${checkOutTime}`);
-        const workingHours = (checkOut - checkIn) / (1000 * 60 * 60);
-        
         // Update attendance record
         await attendance.update({
-            check_out_time: checkOutTime,
-            working_hours: workingHours.toFixed(2)
+            check_out_time: checkOutTime
         });
         
         // Update driver's current status
         await driver.update({
-            logout_time: new Date(),
-            working_hours: workingHours.toFixed(2)
+            logout_time: new Date()
         });
         
         res.status(200).json({
@@ -315,7 +307,6 @@ exports.markAbsent = async (req, res) => {
                 attendance_status: 'Absent',
                 check_in_time: null,
                 check_out_time: null,
-                working_hours: 0.00,
                 remarks: remarks || null
             });
         } else {
@@ -420,11 +411,6 @@ exports.getDriverAttendanceStats = async (req, res) => {
         const absentDays = attendanceRecords.filter(r => r.attendance_status === 'Absent').length;
         const notMarkedDays = attendanceRecords.filter(r => r.attendance_status === 'Not Marked').length;
         
-        const totalWorkingHours = attendanceRecords
-            .filter(r => r.working_hours)
-            .reduce((sum, r) => sum + parseFloat(r.working_hours), 0);
-        
-        const avgWorkingHours = presentDays > 0 ? (totalWorkingHours / presentDays).toFixed(2) : 0;
         const attendancePercentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
         
         res.status(200).json({
@@ -441,8 +427,6 @@ exports.getDriverAttendanceStats = async (req, res) => {
                     presentDays,
                     absentDays,
                     notMarkedDays,
-                    totalWorkingHours: totalWorkingHours.toFixed(2),
-                    avgWorkingHours,
                     attendancePercentage
                 }
             }
@@ -508,10 +492,6 @@ exports.getAttendanceReport = async (req, res) => {
             const absentDays = driverAttendance.filter(r => r.attendance_status === 'Absent').length;
             const totalDays = driverAttendance.length;
             
-            const totalWorkingHours = driverAttendance
-                .filter(r => r.working_hours)
-                .reduce((sum, r) => sum + parseFloat(r.working_hours), 0);
-            
             const attendancePercentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
             
             return {
@@ -523,7 +503,6 @@ exports.getAttendanceReport = async (req, res) => {
                 presentDays,
                 absentDays,
                 totalDays,
-                totalWorkingHours: totalWorkingHours.toFixed(2),
                 attendancePercentage
             };
         });

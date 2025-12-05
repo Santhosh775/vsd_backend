@@ -1,4 +1,5 @@
 const Labour = require('../model/labourModel');
+const LabourExcessPay = require('../model/labourExcessPayModel');
 const { Op } = require('sequelize');
 
 // Function to generate labour ID with sequential numbering
@@ -21,20 +22,6 @@ const generateLabourId = async () => {
     // Next sequence number (yearLabours count is 0-based, so we add 1)
     const sequence = (yearLabours + 1).toString().padStart(3, '0');
     return `LAB-${year}-${sequence}`;
-};
-
-// Calculate work hours from check-in and check-out times
-const calculateWorkHours = (checkIn, checkOut) => {
-    if (!checkIn || !checkOut) return 0;
-    
-    const [inHours, inMinutes] = checkIn.split(':').map(Number);
-    const [outHours, outMinutes] = checkOut.split(':').map(Number);
-    
-    const inTime = inHours + inMinutes / 60;
-    const outTime = outHours + outMinutes / 60;
-    
-    const hours = outTime - inTime;
-    return hours > 0 ? hours.toFixed(2) : 0;
 };
 
 // Create a new labour
@@ -90,11 +77,6 @@ exports.createLabour = async (req, res) => {
             req.body.profile_image = `/uploads/labours/${req.file.filename}`;
         }
         
-        // Calculate work hours if check-in and check-out times are provided
-        if (req.body.check_in_time && req.body.check_out_time) {
-            req.body.today_hours = calculateWorkHours(req.body.check_in_time, req.body.check_out_time);
-        }
-        
         const labour = await Labour.create(req.body);
         
         res.status(201).json({
@@ -125,20 +107,12 @@ exports.createLabour = async (req, res) => {
 // Get all labours
 exports.getAllLabours = async (req, res) => {
     try {
-        const { status, work_type, location, department } = req.query;
+        const { status, department } = req.query;
         
         let whereClause = {};
         
         if (status) {
             whereClause.status = status;
-        }
-        
-        if (work_type) {
-            whereClause.work_type = work_type;
-        }
-        
-        if (location) {
-            whereClause.location = location;
         }
         
         if (department) {
@@ -241,11 +215,6 @@ exports.updateLabour = async (req, res) => {
             req.body.profile_image = `/uploads/labours/${req.file.filename}`;
         }
         
-        // Calculate work hours if check-in and check-out times are provided
-        if (req.body.check_in_time && req.body.check_out_time) {
-            req.body.today_hours = calculateWorkHours(req.body.check_in_time, req.body.check_out_time);
-        }
-        
         await labour.update(req.body);
         
         res.status(200).json({
@@ -308,8 +277,7 @@ exports.searchLabours = async (req, res) => {
                     { full_name: { [Op.like]: `%${query}%` } },
                     { labour_id: { [Op.like]: `%${query}%` } },
                     { mobile_number: { [Op.like]: `%${query}%` } },
-                    { department: { [Op.like]: `%${query}%` } },
-                    { location: { [Op.like]: `%${query}%` } }
+                    { department: { [Op.like]: `%${query}%` } }
                 ]
             }
         });
@@ -328,129 +296,6 @@ exports.searchLabours = async (req, res) => {
     }
 };
 
-// Mark attendance (Present/Absent/Half Day)
-exports.markAttendance = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status, check_in_time, check_out_time } = req.body;
-        
-        const labour = await Labour.findByPk(id);
-        if (!labour) {
-            return res.status(404).json({
-                success: false,
-                message: 'Labour not found'
-            });
-        }
-        
-        const updateData = { status };
-        
-        if (check_in_time) {
-            updateData.check_in_time = check_in_time;
-        }
-        
-        if (check_out_time) {
-            updateData.check_out_time = check_out_time;
-            
-            // Calculate work hours if both times are available
-            if (labour.check_in_time || check_in_time) {
-                const inTime = check_in_time || labour.check_in_time;
-                updateData.today_hours = calculateWorkHours(inTime, check_out_time);
-            }
-        }
-        
-        await labour.update(updateData);
-        
-        res.status(200).json({
-            success: true,
-            message: 'Attendance marked successfully',
-            data: labour
-        });
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'Error marking attendance',
-            error: error.message
-        });
-    }
-};
-
-// Assign work to labour
-exports.assignWork = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { order_id, location, work_type } = req.body;
-        
-        const labour = await Labour.findByPk(id);
-        if (!labour) {
-            return res.status(404).json({
-                success: false,
-                message: 'Labour not found'
-            });
-        }
-        
-        await labour.update({
-            order_id,
-            location,
-            work_type,
-            status: 'Assigned'
-        });
-        
-        res.status(200).json({
-            success: true,
-            message: 'Work assigned successfully',
-            data: labour
-        });
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'Error assigning work',
-            error: error.message
-        });
-    }
-};
-
-// Get attendance statistics
-exports.getAttendanceStats = async (req, res) => {
-    try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const totalRegistered = await Labour.count();
-        
-        const present = await Labour.count({
-            where: { status: 'Present' }
-        });
-        
-        const absent = await Labour.count({
-            where: { status: 'Absent' }
-        });
-        
-        const halfDay = await Labour.count({
-            where: { status: 'Half Day' }
-        });
-        
-        const notMarked = totalRegistered - (present + absent + halfDay);
-        
-        res.status(200).json({
-            success: true,
-            message: 'Attendance statistics retrieved successfully',
-            data: {
-                totalRegistered,
-                present,
-                absent,
-                halfDay,
-                notMarked
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error retrieving attendance statistics',
-            error: error.message
-        });
-    }
-};
-
 // Get labour summary statistics
 exports.getLabourStats = async (req, res) => {
     try {
@@ -460,12 +305,7 @@ exports.getLabourStats = async (req, res) => {
             where: { status: 'Active' }
         });
         
-        const pendingPayouts = await Labour.sum('daily_wage', {
-            where: { status: 'Present' }
-        });
-        
-        // This would need a separate payouts tracking system for accurate total paid
-        // For now, returning 0 or you can implement a payouts table
+        const pendingPayouts = 0;
         const totalPaid = 0;
         
         res.status(200).json({
@@ -482,6 +322,130 @@ exports.getLabourStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error retrieving labour statistics',
+            error: error.message
+        });
+    }
+};
+
+// Labour Excess Pay CRUD Operations
+
+// Create excess pay record
+exports.createExcessPay = async (req, res) => {
+    try {
+        const excessPay = await LabourExcessPay.create(req.body);
+        res.status(201).json({
+            success: true,
+            message: 'Excess pay record created successfully',
+            data: excessPay
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error creating excess pay record',
+            error: error.message
+        });
+    }
+};
+
+// Get all excess pay records
+exports.getAllExcessPay = async (req, res) => {
+    try {
+        const excessPayRecords = await LabourExcessPay.findAll({
+            include: [{
+                model: Labour,
+                as: 'labour',
+                attributes: ['lid', 'labour_id', 'full_name']
+            }],
+            order: [['date', 'DESC']]
+        });
+        res.status(200).json({
+            success: true,
+            message: 'Excess pay records retrieved successfully',
+            data: excessPayRecords
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving excess pay records',
+            error: error.message
+        });
+    }
+};
+
+// Get excess pay record by ID
+exports.getExcessPayById = async (req, res) => {
+    try {
+        const excessPay = await LabourExcessPay.findByPk(req.params.id, {
+            include: [{
+                model: Labour,
+                as: 'labour',
+                attributes: ['lid', 'labour_id', 'full_name']
+            }]
+        });
+        if (!excessPay) {
+            return res.status(404).json({
+                success: false,
+                message: 'Excess pay record not found'
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Excess pay record retrieved successfully',
+            data: excessPay
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving excess pay record',
+            error: error.message
+        });
+    }
+};
+
+// Update excess pay record
+exports.updateExcessPay = async (req, res) => {
+    try {
+        const excessPay = await LabourExcessPay.findByPk(req.params.id);
+        if (!excessPay) {
+            return res.status(404).json({
+                success: false,
+                message: 'Excess pay record not found'
+            });
+        }
+        await excessPay.update(req.body);
+        res.status(200).json({
+            success: true,
+            message: 'Excess pay record updated successfully',
+            data: excessPay
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error updating excess pay record',
+            error: error.message
+        });
+    }
+};
+
+// Delete excess pay record
+exports.deleteExcessPay = async (req, res) => {
+    try {
+        const excessPay = await LabourExcessPay.findByPk(req.params.id);
+        if (!excessPay) {
+            return res.status(404).json({
+                success: false,
+                message: 'Excess pay record not found'
+            });
+        }
+        await excessPay.destroy();
+        res.status(200).json({
+            success: true,
+            message: 'Excess pay record deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting excess pay record',
             error: error.message
         });
     }

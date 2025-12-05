@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
-const Driver = require('./driverModel');
 
 const AdvancePay = sequelize.define('AdvancePay', {
     id: {
@@ -23,7 +22,7 @@ const AdvancePay = sequelize.define('AdvancePay', {
         allowNull: false
     },
     advance_amount: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
         comment: 'Advance payment amount in rupees'
     }

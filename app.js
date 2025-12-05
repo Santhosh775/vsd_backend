@@ -13,7 +13,7 @@ app.use(globalLimiter);
 
 app.use(cors(
     {
-        origin: 'https://18.60.117.207',
+        origin: '*',
         methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true
@@ -45,6 +45,7 @@ const thirdPartyRoute = require('./router/thirdPartyRoute');
 const vendorRoute = require('./router/vendorRoute');
 const driverRoute = require('./router/driverRoute');
 const labourRoute = require('./router/labourRoute');
+const labourAttendanceRoute = require('./router/labourAttendanceRoute');
 const advancePayRoute = require('./router/advancePayRoute');
 const driverAttendance = require('./router/driverAttendanceRoute');
 const excessKM = require('./router/excessKmRoute');
@@ -63,6 +64,7 @@ app.use('/api/v1/thirdparty', thirdPartyRoute);
 app.use('/api/v1/vendor', vendorRoute);
 app.use('/api/v1/driver', driverRoute);
 app.use('/api/v1/labour', labourRoute);
+app.use('/api/v1/labour-attendance', labourAttendanceRoute);
 app.use('/api/v1/advance-pay', advancePayRoute);
 app.use('/api/v1/driver-attendance', driverAttendance);
 app.use('/api/v1/excess-km', excessKM);

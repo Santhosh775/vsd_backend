@@ -23,7 +23,10 @@ router.post('/create',
     uploadDriver.fields([
         { name: 'driver_image', maxCount: 1 },
         { name: 'license_image', maxCount: 1 },
-        { name: 'driver_id_proof', maxCount: 1 }
+        { name: 'driver_id_proof', maxCount: 1 },
+        { name: 'insurance_doc', maxCount: 1 },
+        { name: 'pollution_doc', maxCount: 1 },
+        { name: 'ka_permit_doc', maxCount: 1 }
     ]),
     validateDriver,
     driverController.createDriver
@@ -61,11 +64,13 @@ router.get('/:id',
 
 // Update driver by ID (Admin only)
 router.put('/:id', 
-    authMiddleware, 
     uploadDriver.fields([
         { name: 'driver_image', maxCount: 1 },
         { name: 'license_image', maxCount: 1 },
-        { name: 'driver_id_proof', maxCount: 1 }
+        { name: 'driver_id_proof', maxCount: 1 },
+        { name: 'insurance_doc', maxCount: 1 },
+        { name: 'pollution_doc', maxCount: 1 },
+        { name: 'ka_permit_doc', maxCount: 1 }
     ]),
     validateDriverUpdate,
     driverController.updateDriver

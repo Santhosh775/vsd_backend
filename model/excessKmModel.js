@@ -27,22 +27,22 @@ const ExcessKM = sequelize.define('ExcessKM', {
         allowNull: false
     },
     start_km: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
         comment: 'Starting odometer reading in kilometers'
     },
     end_km: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
         comment: 'Ending odometer reading in kilometers'
     },
     kilometers: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
         comment: 'Total kilometers (end_km - start_km)'
     },
     amount: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
         comment: 'Amount charged for excess kilometers'
     }

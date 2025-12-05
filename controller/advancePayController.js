@@ -93,7 +93,7 @@ exports.getAdvancePayById = async (req, res) => {
 exports.getAdvancePaysByDriverId = async (req, res) => {
     try {
         const advancePays = await AdvancePay.findAll({
-            where: { driver_id: req.params.driver_id },
+            where: { did: req.params.did },
             include: [{
                 model: Driver,
                 as: 'driver',

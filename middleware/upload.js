@@ -86,9 +86,23 @@ const uploadVendor = multer({
     fileFilter: imageFilter,
     limits: { fileSize: 2 * 1024 * 1024 }
 });
+const driverDocumentFilter = (req, file, cb) => {
+    const allowedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only images (JPG, PNG, GIF, WebP) and documents (PDF, DOC, DOCX) are allowed'), false);
+    }
+};
+
 const uploadDriver = multer({
     storage: createStorage('drivers', 'driver'),
-    fileFilter: imageFilter,
+    fileFilter: driverDocumentFilter,
     limits: { fileSize: 20 * 1024 * 1024 }
 });
 const uploadLabour = multer({

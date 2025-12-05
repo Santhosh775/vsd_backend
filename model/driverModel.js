@@ -124,6 +124,21 @@ const Driver = sequelize.define('Driver', {
         allowNull: true,
         comment: 'Upload ID Proof'
     },
+    insurance_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload Insurance Document'
+    },
+    pollution_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload Pollution Certificate Document'
+    },
+    ka_permit_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload KA Permit Document'
+    },
     status: {
         type: DataTypes.ENUM('Available', 'On Trip', 'Break', 'Inactive'),
         allowNull: false,

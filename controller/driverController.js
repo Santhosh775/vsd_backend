@@ -120,6 +120,15 @@ exports.createDriver = async (req, res) => {
             if (req.files.driver_id_proof) {
                 req.body.driver_id_proof = `/uploads/drivers/${req.files.driver_id_proof[0].filename}`;
             }
+            if (req.files.insurance_doc) {
+                req.body.insurance_doc = `/uploads/drivers/${req.files.insurance_doc[0].filename}`;
+            }
+            if (req.files.pollution_doc) {
+                req.body.pollution_doc = `/uploads/drivers/${req.files.pollution_doc[0].filename}`;
+            }
+            if (req.files.ka_permit_doc) {
+                req.body.ka_permit_doc = `/uploads/drivers/${req.files.ka_permit_doc[0].filename}`;
+            }
         }
 
         // Set is_active based on status if not provided
@@ -303,6 +312,15 @@ exports.updateDriver = async (req, res) => {
             }
             if (req.files.driver_id_proof) {
                 req.body.driver_id_proof = `/uploads/drivers/${req.files.driver_id_proof[0].filename}`;
+            }
+            if (req.files.insurance_doc) {
+                req.body.insurance_doc = `/uploads/drivers/${req.files.insurance_doc[0].filename}`;
+            }
+            if (req.files.pollution_doc) {
+                req.body.pollution_doc = `/uploads/drivers/${req.files.pollution_doc[0].filename}`;
+            }
+            if (req.files.ka_permit_doc) {
+                req.body.ka_permit_doc = `/uploads/drivers/${req.files.ka_permit_doc[0].filename}`;
             }
         }
 

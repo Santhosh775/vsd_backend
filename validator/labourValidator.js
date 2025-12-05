@@ -59,33 +59,8 @@ exports.validateLabour = [
 
     body('status')
         .optional()
-        .isIn(['Present', 'Absent', 'Half Day', 'Active', 'Inactive'])
-        .withMessage('Invalid status'),
-
-    body('order_id')
-        .optional()
-        .isLength({ max: 50 })
-        .withMessage('Order ID must be less than 50 characters'),
-
-    body('location')
-        .optional()
-        .isLength({ max: 100 })
-        .withMessage('Location must be less than 100 characters'),
-
-    body('work_type')
-        .optional()
-        .isLength({ max: 50 })
-        .withMessage('Work type must be less than 50 characters'),
-
-    body('check_in_time')
-        .optional()
-        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-        .withMessage('Check-in time must be in HH:MM format'),
-
-    body('check_out_time')
-        .optional()
-        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-        .withMessage('Check-out time must be in HH:MM format')
+        .isIn(['Active', 'Inactive'])
+        .withMessage('Invalid status')
 ];
 
 exports.validateLabourUpdate = [
@@ -143,39 +118,76 @@ exports.validateLabourUpdate = [
 
     body('status')
         .optional()
-        .isIn(['Present', 'Absent', 'Half Day', 'Active', 'Inactive'])
-        .withMessage('Invalid status'),
+        .isIn(['Active', 'Inactive'])
+        .withMessage('Invalid status')
+];
 
-    body('order_id')
+
+
+exports.validateExcessPay = [
+    body('date')
+        .notEmpty()
+        .withMessage('Date is required')
+        .isISO8601()
+        .withMessage('Date must be a valid date'),
+
+    body('labour_name')
+        .notEmpty()
+        .withMessage('Labour name is required')
+        .isLength({ max: 100 })
+        .withMessage('Labour name must be less than 100 characters'),
+
+    body('excess_hours')
+        .notEmpty()
+        .withMessage('Excess hours is required')
+        .isFloat({ min: 0 })
+        .withMessage('Excess hours must be a positive number'),
+
+    body('amount')
+        .notEmpty()
+        .withMessage('Amount is required')
+        .isFloat({ min: 0 })
+        .withMessage('Amount must be a positive number')
+];
+
+exports.validateExcessPayUpdate = [
+    param('id')
+        .isInt()
+        .withMessage('Excess pay ID must be an integer'),
+
+    body('date')
         .optional()
-        .isLength({ max: 50 })
-        .withMessage('Order ID must be less than 50 characters'),
+        .isISO8601()
+        .withMessage('Date must be a valid date'),
 
-    body('location')
+    body('labour_name')
         .optional()
         .isLength({ max: 100 })
-        .withMessage('Location must be less than 100 characters'),
+        .withMessage('Labour name must be less than 100 characters'),
 
-    body('work_type')
+    body('excess_hours')
         .optional()
-        .isLength({ max: 50 })
-        .withMessage('Work type must be less than 50 characters'),
+        .isFloat({ min: 0 })
+        .withMessage('Excess hours must be a positive number'),
 
-    body('check_in_time')
+    body('amount')
         .optional()
-        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-        .withMessage('Check-in time must be in HH:MM format'),
-
-    body('check_out_time')
-        .optional()
-        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-        .withMessage('Check-out time must be in HH:MM format')
+        .isFloat({ min: 0 })
+        .withMessage('Amount must be a positive number')
 ];
 
 exports.validateAttendance = [
-    param('id')
+    body('labour_id')
+        .notEmpty()
+        .withMessage('Labour ID is required')
         .isInt()
         .withMessage('Labour ID must be an integer'),
+
+    body('date')
+        .notEmpty()
+        .withMessage('Date is required')
+        .isISO8601()
+        .withMessage('Date must be a valid date'),
 
     body('status')
         .notEmpty()
@@ -185,41 +197,33 @@ exports.validateAttendance = [
 
     body('check_in_time')
         .optional()
-        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-        .withMessage('Check-in time must be in HH:MM format'),
+        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+        .withMessage('Check-in time must be in HH:MM:SS format'),
 
     body('check_out_time')
         .optional()
-        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-        .withMessage('Check-out time must be in HH:MM format')
+        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+        .withMessage('Check-out time must be in HH:MM:SS format')
 ];
 
-exports.validateWorkAssignment = [
+exports.validateAttendanceUpdate = [
     param('id')
         .isInt()
-        .withMessage('Labour ID must be an integer'),
+        .withMessage('Attendance ID must be an integer'),
 
-    body('order_id')
-        .notEmpty()
-        .withMessage('Order ID is required')
-        .isLength({ max: 50 })
-        .withMessage('Order ID must be less than 50 characters'),
-
-    body('location')
+    body('status')
         .optional()
-        .isLength({ max: 100 })
-        .withMessage('Location must be less than 100 characters'),
+        .isIn(['Present', 'Absent', 'Half Day'])
+        .withMessage('Status must be Present, Absent, or Half Day'),
 
-    body('work_type')
+    body('check_in_time')
         .optional()
-        .isLength({ max: 50 })
-        .withMessage('Work type must be less than 50 characters')
+        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+        .withMessage('Check-in time must be in HH:MM:SS format'),
+
+    body('check_out_time')
+        .optional()
+        .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+        .withMessage('Check-out time must be in HH:MM:SS format')
 ];
 
-exports.validateSearch = [
-    query('query')
-        .notEmpty()
-        .withMessage('Search query is required')
-        .isLength({ min: 1, max: 100 })
-        .withMessage('Search query must be between 1 and 100 characters')
-];

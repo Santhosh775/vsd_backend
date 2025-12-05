@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const labourController = require('../controller/labourController');
-const { validateLabour, validateLabourUpdate, validateAttendance, validateWorkAssignment } = require('../validator/labourValidator');
+const { validateLabour, validateLabourUpdate, validateExcessPay, validateExcessPayUpdate } = require('../validator/labourValidator');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { uploadLabour } = require('../middleware/upload');
 
@@ -45,30 +45,44 @@ router.get('/search/query',
     labourController.searchLabours
 );
 
-// Mark attendance (Admin only)
-router.patch('/:id/attendance', 
-    authMiddleware,
-    validateAttendance,
-    labourController.markAttendance
-);
-
-// Assign work to labour (Admin only)
-router.patch('/:id/assign-work', 
-    authMiddleware,
-    validateWorkAssignment,
-    labourController.assignWork
-);
-
-// Get attendance statistics (Admin only)
-router.get('/stats/attendance', 
-    authMiddleware, 
-    labourController.getAttendanceStats
-);
-
 // Get labour summary statistics (Admin only)
 router.get('/stats/summary', 
     authMiddleware, 
     labourController.getLabourStats
+);
+
+// Labour Excess Pay Routes
+
+// Create excess pay record
+router.post('/excess-pay/create',
+    authMiddleware,
+    validateExcessPay,
+    labourController.createExcessPay
+);
+
+// Get all excess pay records
+router.get('/excess-pay/list',
+    authMiddleware,
+    labourController.getAllExcessPay
+);
+
+// Get excess pay record by ID
+router.get('/excess-pay/:id',
+    authMiddleware,
+    labourController.getExcessPayById
+);
+
+// Update excess pay record
+router.put('/excess-pay/:id',
+    authMiddleware,
+    validateExcessPayUpdate,
+    labourController.updateExcessPay
+);
+
+// Delete excess pay record
+router.delete('/excess-pay/:id',
+    authMiddleware,
+    labourController.deleteExcessPay
 );
 
 module.exports = router;

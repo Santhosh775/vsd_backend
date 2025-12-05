@@ -161,10 +161,10 @@ exports.markCheckIn = async (req, res) => {
 exports.markCheckOut = async (req, res) => {
     try {
         const { driver_id } = req.params;
-        const { date, time } = req.body;
+        const { date } = req.body;
         
         const attendanceDate = date || new Date().toISOString().split('T')[0];
-        const checkOutTime = time || new Date().toTimeString().split(' ')[0];
+        const checkOutTime = new Date().toTimeString().split(' ')[0];
         
         // Check if driver exists
         const driver = await Driver.findByPk(driver_id);
@@ -186,7 +186,7 @@ exports.markCheckOut = async (req, res) => {
         if (!attendance) {
             return res.status(400).json({
                 success: false,
-                message: 'No check-in record found for this date'
+                message: 'No attendance record found for this date'
             });
         }
         
@@ -228,6 +228,7 @@ exports.markPresent = async (req, res) => {
         const { date } = req.body;
         
         const attendanceDate = date || new Date().toISOString().split('T')[0];
+        const checkInTime = new Date().toTimeString().split(' ')[0];
         
         // Check if driver exists
         const driver = await Driver.findByPk(driver_id);
@@ -248,24 +249,27 @@ exports.markPresent = async (req, res) => {
         
         if (attendance) {
             await attendance.update({
+                check_in_time: checkInTime,
                 attendance_status: 'Present'
             });
         } else {
             attendance = await AttendanceHistory.create({
                 driver_id: driver_id,
                 date: attendanceDate,
+                check_in_time: checkInTime,
                 attendance_status: 'Present'
             });
         }
         
         // Update driver's current status
         await driver.update({
+            login_time: new Date(),
             attendance_status: 'Present'
         });
         
         res.status(200).json({
             success: true,
-            message: 'Driver marked as present',
+            message: 'Driver marked as present and checked in',
             data: attendance
         });
     } catch (error) {

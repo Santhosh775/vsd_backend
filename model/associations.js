@@ -7,7 +7,9 @@ const ThirdParty = require('./thirdPartyModel');
 const Vendor = require('./vendorModel');
 const Driver = require('./driverModel');
 const Labour = require('./labourModel');
-const AdvancePay = require('./advancepayModel');
+const LabourAttendance = require('./labourAttendanceModel');
+const LabourExcessPay = require('./labourExcessPayModel');
+const AdvancePay = require('./advancePayModel');
 const driverAttendance = require('./driverAttendanceModel');
 const excessKM = require('./excessKmModel');
 const fuelExpense = require('./fuelExpenseModel');
@@ -40,8 +42,8 @@ Product.belongsTo(Category, {
 // We'll handle this relationship manually in the controller
 
 // Driver associations
-Driver.hasMany(AdvancePay, { foreignKey: 'driver_id', as: 'advancePayments' });
-AdvancePay.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
+Driver.hasMany(AdvancePay, { foreignKey: 'driver_id', sourceKey: 'did', as: 'advancePayments' });
+AdvancePay.belongsTo(Driver, { foreignKey: 'driver_id', targetKey: 'did', as: 'driver' });
 
 Driver.hasMany(driverAttendance, { foreignKey: 'driver_id', as: 'attendanceHistory' });
 driverAttendance.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
@@ -55,6 +57,14 @@ fuelExpense.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
 Driver.hasMany(remark, { foreignKey: 'driver_id', as: 'remarks' });
 remark.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
 
+// Labour associations
+Labour.hasMany(LabourAttendance, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'attendanceRecords' });
+LabourAttendance.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'labour' });
+
+Labour.hasMany(LabourExcessPay, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'excessPayRecords' });
+LabourExcessPay.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'labour' });
+
+
 module.exports = {
     Category,
     Product,
@@ -65,6 +75,8 @@ module.exports = {
     Vendor,
     Driver,
     Labour,
+    LabourAttendance,
+    LabourExcessPay,
     AdvancePay,
     driverAttendance,
     excessKM,

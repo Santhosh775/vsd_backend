@@ -13,7 +13,11 @@ const AdvancePay = require('./advancePayModel');
 const driverAttendance = require('./driverAttendanceModel');
 const excessKM = require('./excessKmModel');
 const fuelExpense = require('./fuelExpenseModel');
-const remark = require('./remarkModel')
+const remark = require('./remarkModel');
+const Order = require('./orderModel');
+const OrderItem = require('./orderItemModel');
+const OrderAssignment = require('./orderAssignmentModel');
+const Draft = require('./draftModel');
 
 // Category - Product relationship
 Category.hasMany(Product, { 
@@ -27,6 +31,25 @@ Product.belongsTo(Category, {
     foreignKey: 'category_id', 
     as: 'category',
     allowNull: false
+});
+
+// Order - OrderItem relationship
+Order.hasMany(OrderItem, {
+    foreignKey: 'order_id',
+    as: 'items',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+
+OrderItem.belongsTo(Order, {
+    foreignKey: 'order_id',
+    as: 'parentOrder'
+});
+
+// OrderItem - Product relationship
+OrderItem.belongsTo(Product, {
+    foreignKey: 'product_id',
+    as: 'product'
 });
 
 // Farmer - Product relationship (many-to-many through product_list)
@@ -81,5 +104,9 @@ module.exports = {
     driverAttendance,
     excessKM,
     fuelExpense,
-    remark
+    remark,
+    Order,
+    OrderItem,
+    OrderAssignment,
+    Draft
 };

@@ -55,6 +55,7 @@ const orderRoute = require('./router/orderRoute');
 const orderAssignmentRoute = require('./router/orderAssignmentRoute');
 const draftRoute = require('./router/draftRoute');
 const inventoryRoute = require('./router/inventoryRoute');
+const rolesPermissionRoute = require('./router/rolesPermissionRoute');
 
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
@@ -78,6 +79,7 @@ app.use('/api/v1/order', orderRoute);
 app.use('/api/v1/order-assignment', orderAssignmentRoute);
 app.use('/api/v1/draft', draftRoute);
 app.use('/api/v1/inventory', inventoryRoute);
+app.use('/api/v1/roles-permissions', rolesPermissionRoute);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

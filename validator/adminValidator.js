@@ -29,7 +29,7 @@ exports.registerValidation = [
 
     body("role")
         .optional()
-        .isIn(["admin", "superadmin"]).withMessage("Invalid role")
+        .isIn(["admin", "superadmin","supervisor","accountant","driver"]).withMessage("Invalid role")
 ];
 
 // Login validation

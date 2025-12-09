@@ -1,6 +1,7 @@
 const Category = require('./categoryModel');
 const Product = require('./productModel');
 const Admin = require('./adminModel');
+const RolesPermission = require('./rolesPermissionModel');
 const Farmer = require('./farmerModel');
 const Supplier = require('./supplierModel');
 const ThirdParty = require('./thirdPartyModel');
@@ -18,6 +19,19 @@ const Order = require('./orderModel');
 const OrderItem = require('./orderItemModel');
 const OrderAssignment = require('./orderAssignmentModel');
 const Draft = require('./draftModel');
+
+// Admin - RolesPermission relationship
+Admin.hasOne(RolesPermission, {
+    foreignKey: 'aid',
+    as: 'permissions',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+
+RolesPermission.belongsTo(Admin, {
+    foreignKey: 'aid',
+    as: 'admin'
+});
 
 // Category - Product relationship
 Category.hasMany(Product, { 
@@ -92,6 +106,7 @@ module.exports = {
     Category,
     Product,
     Admin,
+    RolesPermission,
     Farmer,
     Supplier,
     ThirdParty,

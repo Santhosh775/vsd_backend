@@ -22,12 +22,19 @@ exports.createInventoryValidation = [
         .isIn(['Boxes', 'Bags', 'Tape', 'Paper', 'Plastic Covers']).withMessage("Invalid category"),
 
     body("weight")
+        .if(body('category').not().equals('Tape'))
         .notEmpty().withMessage("Weight/Quantity is required")
         .isFloat({ min: 0.01 }).withMessage("Weight must be greater than 0"),
 
     body("unit")
+        .if(body('category').not().equals('Tape'))
         .notEmpty().withMessage("Unit type is required")
         .isIn(['kg', 'm', 'pcs', 'ltr']).withMessage("Invalid unit type"),
+
+    body("color")
+        .if(body('category').equals('Tape'))
+        .notEmpty().withMessage("Color is required for tape")
+        .isLength({ min: 2, max: 50 }).withMessage("Color must be 2-50 characters"),
 
     body("price")
         .notEmpty().withMessage("Price is required")
@@ -44,12 +51,19 @@ exports.updateInventoryValidation = [
         .isIn(['Boxes', 'Bags', 'Tape', 'Paper', 'Plastic Covers']).withMessage("Invalid category"),
 
     body("weight")
+        .if(body('category').exists().not().equals('Tape'))
         .optional()
         .isFloat({ min: 0.01 }).withMessage("Weight must be greater than 0"),
 
     body("unit")
+        .if(body('category').exists().not().equals('Tape'))
         .optional()
         .isIn(['kg', 'm', 'pcs', 'ltr']).withMessage("Invalid unit type"),
+
+    body("color")
+        .if(body('category').equals('Tape'))
+        .optional()
+        .isLength({ min: 2, max: 50 }).withMessage("Color must be 2-50 characters"),
 
     body("price")
         .optional()

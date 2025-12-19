@@ -82,4 +82,10 @@ router.delete('/:attendance_id',
     attendanceController.deleteAttendanceRecord
 );
 
+// Get drivers who are present today
+router.get('/present-today', 
+    authMiddleware, 
+    attendanceController.getPresentDriversToday
+);
+
 module.exports = router;

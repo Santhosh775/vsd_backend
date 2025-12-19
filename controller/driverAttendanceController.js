@@ -670,3 +670,31 @@ exports.deleteAttendanceRecord = async (req, res) => {
         });
     }
 };
+
+// Get drivers who are present today
+exports.getPresentDriversToday = async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const presentDrivers = await AttendanceHistory.findAll({
+            where: { date: today, attendance_status: 'Present' },
+            include: [{ 
+                model: Driver, 
+                as: 'driver',
+                attributes: { exclude: ['password'] }
+            }]
+        });
+        
+        res.status(200).json({
+            success: true,
+            message: 'Present drivers retrieved successfully',
+            data: presentDrivers
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching present drivers',
+            error: error.message
+        });
+    }
+};

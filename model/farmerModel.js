@@ -90,6 +90,10 @@ const Farmer = sequelize.define('Farmer', {
         type: DataTypes.STRING,
         allowNull: true
     },
+    branch_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     profile_image: {
         type: DataTypes.STRING,
         allowNull: true

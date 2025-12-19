@@ -39,10 +39,10 @@ const sequelize = new Sequelize(
             timestamps: false
         },
         pool: {
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
+            max: 20, // Increased from 5 to 20
+            min: 2,  // Increased from 0 to 2
+            acquire: 60000, // Increased from 30000 to 60000
+            idle: 30000     // Increased from 10000 to 30000
         }
     }
 );
@@ -55,7 +55,8 @@ async function connectDB() {
         console.log('Connection has been established successfully.');
     } catch (error) {
         console.error('Unable to connect to the database:', error);
-        setTimeout(connectDB, 5000); // Retry after 5 seconds
+        // Remove automatic retry to prevent infinite loops
+        throw error;
     }
 }
 

@@ -28,4 +28,9 @@ router.get('/stats',
     labourAttendanceController.getAttendanceStats
 );
 
+router.get('/present-today', 
+    authMiddleware, 
+    labourAttendanceController.getPresentLaboursToday
+);
+
 module.exports = router;

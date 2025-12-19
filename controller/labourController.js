@@ -277,7 +277,8 @@ exports.searchLabours = async (req, res) => {
                     { full_name: { [Op.like]: `%${query}%` } },
                     { labour_id: { [Op.like]: `%${query}%` } },
                     { mobile_number: { [Op.like]: `%${query}%` } },
-                    { department: { [Op.like]: `%${query}%` } }
+                    { department: { [Op.like]: `%${query}%` } },
+                    { work_type: { [Op.like]: `%${query}%` } }
                 ]
             }
         });

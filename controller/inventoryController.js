@@ -2,13 +2,14 @@ const Inventory = require('../model/inventoryModel');
 
 exports.createInventory = async (req, res) => {
     try {
-        const { name, category, weight, unit, price } = req.body;
+        const { name, category, weight, unit, price, color } = req.body;
         
         const newInventory = await Inventory.create({
             name,
             category,
-            weight,
-            unit,
+            weight: category === 'Tape' ? null : weight,
+            unit: category === 'Tape' ? null : unit,
+            color: category === 'Tape' ? color : null,
             price
         });
         
@@ -29,8 +30,16 @@ exports.createInventory = async (req, res) => {
 exports.getAllInventory = async (req, res) => {
     try {
         const { page, limit, offset } = req.pagination;
+        const { category } = req.query;
+        
+        const whereClause = {};
+        if (category) {
+            const categories = category.split(',');
+            whereClause.category = categories;
+        }
         
         const { count, rows } = await Inventory.findAndCountAll({
+            where: whereClause,
             order: [['createdAt', 'DESC']],
             limit,
             offset
@@ -83,7 +92,7 @@ exports.getInventoryById = async (req, res) => {
 exports.updateInventory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, category, weight, unit, price } = req.body;
+        const { name, category, weight, unit, price, color } = req.body;
         
         const inventory = await Inventory.findByPk(id);
         if (!inventory) {
@@ -93,7 +102,14 @@ exports.updateInventory = async (req, res) => {
             });
         }
         
-        await inventory.update({ name, category, weight, unit, price });
+        await inventory.update({
+            name,
+            category,
+            weight: category === 'Tape' ? null : weight,
+            unit: category === 'Tape' ? null : unit,
+            color: category === 'Tape' ? color : null,
+            price
+        });
         
         res.status(200).json({
             success: true,

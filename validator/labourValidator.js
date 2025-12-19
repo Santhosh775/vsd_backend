@@ -45,6 +45,12 @@ exports.validateLabour = [
         .isIn(['Packing', 'Loading', 'Unloading'])
         .withMessage('Department must be Packing, Loading, or Unloading'),
 
+    body('work_type')
+        .notEmpty()
+        .withMessage('Work type is required')
+        .isIn(['Normal', 'Medium', 'Heavy'])
+        .withMessage('Work type must be Normal, Medium, or Heavy'),
+
     body('daily_wage')
         .notEmpty()
         .withMessage('Daily wage is required')
@@ -60,7 +66,32 @@ exports.validateLabour = [
     body('status')
         .optional()
         .isIn(['Active', 'Inactive'])
-        .withMessage('Invalid status')
+        .withMessage('Invalid status'),
+
+    body('account_holder_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Account holder name must be less than 100 characters'),
+
+    body('bank_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Bank name must be less than 100 characters'),
+
+    body('account_number')
+        .optional()
+        .matches(/^[0-9]+$/)
+        .withMessage('Account number must contain only digits'),
+
+    body('IFSC_code')
+        .optional()
+        .matches(/^[A-Z0-9]{11}$/)
+        .withMessage('IFSC code must be 11 characters alphanumeric'),
+
+    body('branch_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Branch name must be less than 100 characters')
 ];
 
 exports.validateLabourUpdate = [
@@ -106,6 +137,11 @@ exports.validateLabourUpdate = [
         .isIn(['Packing', 'Loading', 'Unloading'])
         .withMessage('Department must be Packing, Loading, or Unloading'),
 
+    body('work_type')
+        .optional()
+        .isIn(['Normal', 'Medium', 'Heavy'])
+        .withMessage('Work type must be Normal, Medium, or Heavy'),
+
     body('daily_wage')
         .optional()
         .isFloat({ min: 0 })
@@ -119,7 +155,32 @@ exports.validateLabourUpdate = [
     body('status')
         .optional()
         .isIn(['Active', 'Inactive'])
-        .withMessage('Invalid status')
+        .withMessage('Invalid status'),
+
+    body('account_holder_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Account holder name must be less than 100 characters'),
+
+    body('bank_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Bank name must be less than 100 characters'),
+
+    body('account_number')
+        .optional()
+        .matches(/^[0-9]+$/)
+        .withMessage('Account number must contain only digits'),
+
+    body('IFSC_code')
+        .optional()
+        .matches(/^[A-Z0-9]{11}$/)
+        .withMessage('IFSC code must be 11 characters alphanumeric'),
+
+    body('branch_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Branch name must be less than 100 characters')
 ];
 
 

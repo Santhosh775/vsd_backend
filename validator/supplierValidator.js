@@ -84,7 +84,12 @@ exports.validateSupplier = [
     body('IFSC_code')
         .optional()
         .matches(/^[A-Z0-9]{11}$/)
-        .withMessage('IFSC code must be 11 characters alphanumeric')
+        .withMessage('IFSC code must be 11 characters alphanumeric'),
+
+    body('branch_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Branch name must be less than 100 characters')
 ];
 
 exports.validateSupplierUpdate = [
@@ -162,5 +167,10 @@ exports.validateSupplierUpdate = [
     body('IFSC_code')
         .optional()
         .matches(/^[A-Z0-9]{11}$/)
-        .withMessage('IFSC code must be 11 characters alphanumeric')
+        .withMessage('IFSC code must be 11 characters alphanumeric'),
+
+    body('branch_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Branch name must be less than 100 characters')
 ];

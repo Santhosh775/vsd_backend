@@ -187,7 +187,8 @@ exports.markCheckOut = async (req, res) => {
         
         await attendance.update({
             check_out_time: checkOutTime,
-            work_hours: work_hours
+            work_hours: work_hours,
+            status: 'Checked-Out'
         });
         
         res.status(200).json({
@@ -291,6 +292,28 @@ exports.getAttendanceStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error retrieving attendance statistics',
+            error: error.message
+        });
+    }
+};
+
+exports.getPresentLaboursToday = async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const presentLabours = await LabourAttendance.findAll({
+            where: { date: today, status: 'Present' },
+            include: [{ model: Labour, as: 'labour' }]
+        });
+        
+        res.status(200).json({
+            success: true,
+            data: presentLabours
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching present labours',
             error: error.message
         });
     }

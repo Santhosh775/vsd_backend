@@ -112,7 +112,32 @@ exports.validateDriver = [
     body('total_deliveries')
         .optional()
         .isInt({ min: 0 })
-        .withMessage('Total deliveries must be a non-negative integer')
+        .withMessage('Total deliveries must be a non-negative integer'),
+
+    body('account_holder_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Account holder name must be less than 100 characters'),
+
+    body('bank_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Bank name must be less than 100 characters'),
+
+    body('account_number')
+        .optional()
+        .matches(/^[0-9]+$/)
+        .withMessage('Account number must contain only digits'),
+
+    body('IFSC_code')
+        .optional()
+        .matches(/^[A-Z0-9]{11}$/)
+        .withMessage('IFSC code must be 11 characters alphanumeric'),
+
+    body('branch_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Branch name must be less than 100 characters')
 ];
 
 exports.validateDriverUpdate = [
@@ -221,7 +246,32 @@ exports.validateDriverUpdate = [
     body('total_deliveries')
         .optional()
         .isInt({ min: 0 })
-        .withMessage('Total deliveries must be a non-negative integer')
+        .withMessage('Total deliveries must be a non-negative integer'),
+
+    body('account_holder_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Account holder name must be less than 100 characters'),
+
+    body('bank_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Bank name must be less than 100 characters'),
+
+    body('account_number')
+        .optional()
+        .matches(/^[0-9]+$/)
+        .withMessage('Account number must contain only digits'),
+
+    body('IFSC_code')
+        .optional()
+        .matches(/^[A-Z0-9]{11}$/)
+        .withMessage('IFSC code must be 11 characters alphanumeric'),
+
+    body('branch_name')
+        .optional()
+        .isLength({ max: 100 })
+        .withMessage('Branch name must be less than 100 characters')
 ];
 
 exports.validateDriverStatusUpdate = [

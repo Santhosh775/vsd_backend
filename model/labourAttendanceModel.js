@@ -21,7 +21,7 @@ const LabourAttendance = sequelize.define('LabourAttendance', {
         defaultValue: DataTypes.NOW
     },
     status: {
-        type: DataTypes.ENUM('Present', 'Absent', 'Half Day'),
+        type: DataTypes.ENUM('Present', 'Absent', 'Checked-Out'),
         allowNull: false,
         defaultValue: 'Present'
     },

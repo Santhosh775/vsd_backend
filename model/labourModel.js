@@ -50,6 +50,10 @@ const Labour = sequelize.define('Labour', {
         type: DataTypes.ENUM('Packing', 'Loading', 'Unloading'),
         allowNull: false
     },
+    work_type: {
+        type: DataTypes.ENUM('Normal', 'Medium', 'Heavy'),
+        allowNull: false
+    },
     daily_wage: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
@@ -67,7 +71,26 @@ const Labour = sequelize.define('Labour', {
         type: DataTypes.STRING,
         allowNull: true
     },
-
+    account_holder_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    bank_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    account_number: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    IFSC_code: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    branch_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 }, {
     tableName: 'labours',
     timestamps: true,

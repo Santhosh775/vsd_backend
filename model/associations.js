@@ -19,6 +19,10 @@ const Order = require('./orderModel');
 const OrderItem = require('./orderItemModel');
 const OrderAssignment = require('./orderAssignmentModel');
 const Draft = require('./draftModel');
+const Stock = require('./stockModel');
+const Airport = require('./airportModel');
+const PetrolBulk = require('./petrolBulkModel');
+const VegetableAvailability = require('./VegetableAvailability');
 
 // Admin - RolesPermission relationship
 Admin.hasOne(RolesPermission, {
@@ -101,6 +105,63 @@ LabourAttendance.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', 
 Labour.hasMany(LabourExcessPay, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'excessPayRecords' });
 LabourExcessPay.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'labour' });
 
+// // OrderAssignment - Labour relationship
+// OrderAssignment.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'assignedLabour' });
+// Labour.hasMany(OrderAssignment, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'orderAssignments' });
+
+// // OrderAssignment - LabourAttendance relationship
+// OrderAssignment.belongsTo(LabourAttendance, { foreignKey: 'attendance_id', targetKey: 'id', as: 'labourAttendance' });
+// LabourAttendance.hasMany(OrderAssignment, { foreignKey: 'attendance_id', sourceKey: 'id', as: 'orderAssignments' });
+
+// Order - Stock relationship
+Order.hasMany(Stock, {
+    foreignKey: 'order_id',
+    as: 'stockItems',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+
+Stock.belongsTo(Order, {
+    foreignKey: 'order_id',
+    as: 'order'
+});
+
+// // OrderAssignment - Airport relationship
+// OrderAssignment.belongsTo(Airport, {
+//     foreignKey: 'a_id',
+//     as: 'airport'
+// });
+
+// Airport.hasMany(OrderAssignment, {
+//     foreignKey: 'a_id',
+//     as: 'orderAssignments'
+// });
+
+// Define associations
+OrderAssignment.belongsTo(Order, {
+    foreignKey: 'order_id',
+    as: 'order'
+});
+
+OrderAssignment.belongsTo(Driver, {
+    foreignKey: 'airport_driver_id',
+    as: 'airportDriver'
+});
+
+// Farmer - VegetableAvailability relationship
+Farmer.hasMany(VegetableAvailability, {
+    foreignKey: 'farmer_id',
+    sourceKey: 'fid',
+    as: 'vegetableAvailabilities',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+
+VegetableAvailability.belongsTo(Farmer, {
+    foreignKey: 'farmer_id',
+    targetKey: 'fid',
+    as: 'farmer'
+});
 
 module.exports = {
     Category,
@@ -123,5 +184,9 @@ module.exports = {
     Order,
     OrderItem,
     OrderAssignment,
-    Draft
+    Draft,
+    Stock,
+    Airport,
+    PetrolBulk,
+    VegetableAvailability
 };

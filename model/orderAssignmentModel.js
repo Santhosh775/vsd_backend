@@ -21,6 +21,7 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
             key: 'oid'
         }
     },
+    
     // Stage 1: Product Collection
     stage1_status: {
         type: DataTypes.ENUM('pending', 'in_progress', 'completed'),
@@ -28,14 +29,29 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
     },
     collection_type: {
         type: DataTypes.ENUM('Box', 'Bag'),
+        allowNull: false,
         defaultValue: 'Box'
     },
     
-    // Product assignments
+    // Product assignments - Store as form entries
     product_assignments: {
         type: DataTypes.JSON,
         allowNull: true,
-        comment: 'Array of product assignments with farmer/supplier/thirdparty details'
+        comment: 'Direct storage of product assignment form entries'
+    },
+    
+    // Stage 1 Summary Data - Grouped by Driver with Assignment Details
+    stage1_summary_data: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Stage 1 assignment summary grouped by drivers with complete assignment details'
+    },
+    
+    // Keep for backward compatibility
+    item_assignments: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Legacy item assignments structure'
     },
     
     // Delivery routes
@@ -45,37 +61,31 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
         comment: 'Array of delivery routes with driver assignments'
     },
     
-    // Stage 2: Packaging to Airport
+    // Stage 2: Packaging & Quality Check
     stage2_status: {
         type: DataTypes.ENUM('pending', 'in_progress', 'completed'),
         defaultValue: 'pending'
     },
-    packaging_status: {
-        type: DataTypes.STRING,
-        allowNull: true
+    stage2_data: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Stage 2 packaging data with labour assignments, wastage, and reuse tracking'
     },
-    packaging_date: {
-        type: DataTypes.DATEONLY,
-        allowNull: true
-    },
-    ready_for_dispatch: {
-        type: DataTypes.DATE,
-        allowNull: true
-    },
-    net_weight: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    gross_weight: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    package_count: {
-        type: DataTypes.STRING,
-        allowNull: true
+    stage2_summary_data: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Stage 2 assignment summary grouped by labours with complete assignment details'
     },
     
-    // Airport delivery
+    // Stage 3: Airport Delivery
+    airport_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'airports',
+            key: 'aid'
+        }
+    },
     airport_driver_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -84,10 +94,21 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
             key: 'did'
         }
     },
-    special_instructions: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    }
+    stage3_status: {
+        type: DataTypes.ENUM('pending', 'in_progress', 'completed'),
+        defaultValue: 'pending'
+    },
+    stage3_data: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Stage 3 airport delivery data with CT, packages, and driver assignments'
+    },
+    stage3_summary_data: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Stage 3 assignment summary grouped by drivers with complete delivery details'
+    },
+    
 }, {
     tableName: 'order_assignments',
     timestamps: true,
@@ -95,15 +116,6 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
     updatedAt: 'updated_at'
 });
 
-// Define associations
-OrderAssignment.belongsTo(Order, {
-    foreignKey: 'order_id',
-    as: 'order'
-});
 
-OrderAssignment.belongsTo(Driver, {
-    foreignKey: 'airport_driver_id',
-    as: 'airportDriver'
-});
 
 module.exports = OrderAssignment;

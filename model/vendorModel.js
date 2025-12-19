@@ -94,6 +94,10 @@ const Vendor = sequelize.define('Vendor', {
         type: DataTypes.STRING,
         allowNull: true
     },
+    branch_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     profile_image: {
         type: DataTypes.STRING,
         allowNull: true

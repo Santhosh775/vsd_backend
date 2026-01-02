@@ -176,6 +176,7 @@ exports.createProduct = async (req, res) => {
     try {
         const { product_name, category_id, unit, current_price, product_status, default_status } = req.body;
         
+        
         // Check if category exists
         const category = await Category.findByPk(category_id);
         if (!category) {

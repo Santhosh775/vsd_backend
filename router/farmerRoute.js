@@ -19,6 +19,13 @@ router.get('/list',
     farmerController.getAllFarmers
 );
 
+// Search farmers (Admin only)
+router.get('/search', 
+    authMiddleware, 
+    farmerController.searchFarmers
+);
+
+
 // Get farmer by ID (Admin only)
 router.get('/:id', 
     authMiddleware, 
@@ -37,12 +44,6 @@ router.put('/:id',
 router.delete('/:id', 
     authMiddleware, 
     farmerController.deleteFarmer
-);
-
-// Search farmers (Admin only)
-router.get('/search', 
-    authMiddleware, 
-    farmerController.searchFarmers
 );
 
 module.exports = router;

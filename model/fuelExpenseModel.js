@@ -45,6 +45,16 @@ const FuelExpense = sequelize.define('FuelExpense', {
         allowNull: false,
         comment: 'Quantity in liters'
     },
+    pbid: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'petrolbulkmanagement',
+            key: 'pbid'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
+    },
     total_amount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,

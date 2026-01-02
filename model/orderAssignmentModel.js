@@ -109,6 +109,12 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
         comment: 'Stage 3 assignment summary grouped by drivers with complete delivery details'
     },
     
+    // Stage 4: Review
+    stage4_data: {
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
+    
 }, {
     tableName: 'order_assignments',
     timestamps: true,

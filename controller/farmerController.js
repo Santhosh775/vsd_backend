@@ -9,7 +9,6 @@ const generateRegistrationNumber = async () => {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     
-    // Get the count of farmers created today to determine the next sequence number
     const todayStart = new Date(date.setHours(0, 0, 0, 0));
     const todayEnd = new Date(date.setHours(23, 59, 59, 999));
     
@@ -21,7 +20,6 @@ const generateRegistrationNumber = async () => {
         }
     });
     
-    // Next sequence number (todayFarmers count is 0-based, so we add 1)
     const sequence = (todayFarmers + 1).toString().padStart(4, '0');
     return `FAR${year}${month}${day}${sequence}`;
 };
@@ -30,17 +28,19 @@ const generateRegistrationNumber = async () => {
 const enrichFarmerWithProducts = async (farmer) => {
     const farmerData = farmer.toJSON ? farmer.toJSON() : farmer;
     
-    // If product_list exists and is an array, fetch detailed product information
     if (farmerData.product_list && Array.isArray(farmerData.product_list) && farmerData.product_list.length > 0) {
+        const productIds = farmerData.product_list.map(item => 
+            typeof item === 'object' ? item.pid : item
+        );
+        
         const products = await Product.findAll({
             where: {
                 pid: {
-                    [Op.in]: farmerData.product_list
+                    [Op.in]: productIds
                 }
             }
         });
         
-        // Add detailed product information to the farmer data
         farmerData.detailed_products = products;
     }
     
@@ -50,12 +50,10 @@ const enrichFarmerWithProducts = async (farmer) => {
 // Create a new farmer
 exports.createFarmer = async (req, res) => {
     try {
-        // Generate registration number if not provided
         if (!req.body.registration_number) {
             req.body.registration_number = await generateRegistrationNumber();
         }
         
-        // Check if registration number already exists
         const existingFarmerByRegNumber = await Farmer.findOne({
             where: { registration_number: req.body.registration_number }
         });
@@ -67,7 +65,6 @@ exports.createFarmer = async (req, res) => {
             });
         }
         
-        // Check if email already exists (if provided)
         if (req.body.email) {
             const existingFarmerByEmail = await Farmer.findOne({
                 where: { email: req.body.email }
@@ -81,36 +78,31 @@ exports.createFarmer = async (req, res) => {
             }
         }
         
-        // Handle profile image upload
         if (req.file) {
             req.body.profile_image = `/uploads/farmers/${req.file.filename}`;
         }
         
-        // Validate product_list if provided
         if (req.body.product_list) {
-            // Check that product_list is an array, if not try to parse it
             if (!Array.isArray(req.body.product_list)) {
-                // If it's a string, try to parse it as JSON
                 if (typeof req.body.product_list === 'string') {
                     try {
                         req.body.product_list = JSON.parse(req.body.product_list);
                     } catch (parseError) {
-                        // If parsing fails, convert comma-separated string to array
                         if (req.body.product_list.includes(',')) {
-                            req.body.product_list = req.body.product_list.split(',').map(id => id.trim());
+                            req.body.product_list = req.body.product_list.split(',').map(id => parseInt(id.trim()));
                         } else {
-                            // If it's a single value, make it an array
-                            req.body.product_list = [req.body.product_list];
+                            req.body.product_list = [parseInt(req.body.product_list)];
                         }
                     }
                 } else {
-                    // If it's not a string and not an array, convert to array
                     req.body.product_list = [req.body.product_list];
                 }
             }
             
-            // Check that all product IDs exist in the products table
-            const productIds = req.body.product_list;
+            const productIds = req.body.product_list.map(item => 
+                typeof item === 'object' ? item.pid : parseInt(item)
+            );
+            
             const existingProducts = await Product.findAll({
                 where: {
                     pid: {
@@ -119,7 +111,6 @@ exports.createFarmer = async (req, res) => {
                 }
             });
             
-            // Check if all provided product IDs were found
             const foundProductIds = existingProducts.map(product => product.pid);
             const missingProductIds = productIds.filter(id => !foundProductIds.includes(id));
             
@@ -129,6 +120,11 @@ exports.createFarmer = async (req, res) => {
                     message: `The following product IDs do not exist: ${missingProductIds.join(', ')}`
                 });
             }
+            
+            req.body.product_list = existingProducts.map(product => ({
+                pid: product.pid,
+                product_name: product.product_name
+            }));
         }
         
         const farmer = await Farmer.create(req.body);
@@ -140,7 +136,6 @@ exports.createFarmer = async (req, res) => {
             data: enrichedFarmer
         });
     } catch (error) {
-        // Handle Sequelize unique constraint errors
         if (error.name === 'SequelizeUniqueConstraintError') {
             if (error.errors && error.errors[0]) {
                 const field = error.errors[0].path;
@@ -217,7 +212,6 @@ exports.updateFarmer = async (req, res) => {
             });
         }
         
-        // Prevent updating registration number
         if (req.body.registration_number && req.body.registration_number !== farmer.registration_number) {
             return res.status(400).json({
                 success: false,
@@ -225,7 +219,6 @@ exports.updateFarmer = async (req, res) => {
             });
         }
         
-        // Check if email already exists (if provided and different from current)
         if (req.body.email && req.body.email !== farmer.email) {
             const existingFarmerByEmail = await Farmer.findOne({
                 where: { email: req.body.email }
@@ -239,36 +232,31 @@ exports.updateFarmer = async (req, res) => {
             }
         }
         
-        // Handle profile image upload
         if (req.file) {
             req.body.profile_image = `/uploads/farmers/${req.file.filename}`;
         }
         
-        // Validate product_list if provided
         if (req.body.product_list) {
-            // Check that product_list is an array, if not try to parse it
             if (!Array.isArray(req.body.product_list)) {
-                // If it's a string, try to parse it as JSON
                 if (typeof req.body.product_list === 'string') {
                     try {
                         req.body.product_list = JSON.parse(req.body.product_list);
                     } catch (parseError) {
-                        // If parsing fails, convert comma-separated string to array
                         if (req.body.product_list.includes(',')) {
-                            req.body.product_list = req.body.product_list.split(',').map(id => id.trim());
+                            req.body.product_list = req.body.product_list.split(',').map(id => parseInt(id.trim()));
                         } else {
-                            // If it's a single value, make it an array
-                            req.body.product_list = [req.body.product_list];
+                            req.body.product_list = [parseInt(req.body.product_list)];
                         }
                     }
                 } else {
-                    // If it's not a string and not an array, convert to array
                     req.body.product_list = [req.body.product_list];
                 }
             }
             
-            // Check that all product IDs exist in the products table
-            const productIds = req.body.product_list;
+            const productIds = req.body.product_list.map(item => 
+                typeof item === 'object' ? item.pid : parseInt(item)
+            );
+            
             const existingProducts = await Product.findAll({
                 where: {
                     pid: {
@@ -277,7 +265,6 @@ exports.updateFarmer = async (req, res) => {
                 }
             });
             
-            // Check if all provided product IDs were found
             const foundProductIds = existingProducts.map(product => product.pid);
             const missingProductIds = productIds.filter(id => !foundProductIds.includes(id));
             
@@ -287,6 +274,11 @@ exports.updateFarmer = async (req, res) => {
                     message: `The following product IDs do not exist: ${missingProductIds.join(', ')}`
                 });
             }
+            
+            req.body.product_list = existingProducts.map(product => ({
+                pid: product.pid,
+                product_name: product.product_name
+            }));
         }
         
         await farmer.update(req.body);
@@ -298,7 +290,6 @@ exports.updateFarmer = async (req, res) => {
             data: enrichedFarmer
         });
     } catch (error) {
-        // Handle Sequelize unique constraint errors
         if (error.name === 'SequelizeUniqueConstraintError') {
             if (error.errors && error.errors[0]) {
                 const field = error.errors[0].path;
@@ -369,6 +360,39 @@ exports.searchFarmers = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error searching farmers',
+            error: error.message
+        });
+    }
+};
+
+// Get farmer's products
+exports.getFarmerProducts = async (req, res) => {
+    try {
+        const farmer = await Farmer.findByPk(req.params.id);
+        if (!farmer) {
+            return res.status(404).json({
+                success: false,
+                message: 'Farmer not found'
+            });
+        }
+        
+        if (!farmer.product_list || !Array.isArray(farmer.product_list) || farmer.product_list.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No products found for this farmer',
+                data: []
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Farmer products retrieved successfully',
+            data: farmer.product_list
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving farmer products',
             error: error.message
         });
     }

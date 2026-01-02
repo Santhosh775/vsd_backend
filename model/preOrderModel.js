@@ -9,11 +9,7 @@ const PreOrder = sequelize.define('PreOrder', {
     },
     order_id: {
         type: DataTypes.STRING,
-        allowNull: false,
-        references: {
-            model: 'orders',
-            key: 'oid'
-        }
+        allowNull: false
     },
     collection_type: {
         type: DataTypes.ENUM('Box', 'Bag'),

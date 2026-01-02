@@ -1,5 +1,6 @@
 const FuelExpense = require('../model/fuelExpenseModel');
 const Driver = require('../model/driverModel');
+const PetrolBulk = require('../model/petrolBulkModel');
 const { Op } = require('sequelize');
 
 // Create a new fuel expense
@@ -39,11 +40,18 @@ exports.createFuelExpense = async (req, res) => {
 exports.getAllFuelExpenses = async (req, res) => {
     try {
         const fuelExpenses = await FuelExpense.findAll({
-            include: [{
-                model: Driver,
-                as: 'driver',
-                attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
-            }],
+            include: [
+                {
+                    model: Driver,
+                    as: 'driver',
+                    attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
+                },
+                {
+                    model: PetrolBulk,
+                    as: 'petrolBunk',
+                    attributes: ['pbid', 'name', 'location']
+                }
+            ],
             order: [['date', 'DESC']]
         });
         
@@ -65,11 +73,18 @@ exports.getAllFuelExpenses = async (req, res) => {
 exports.getFuelExpenseById = async (req, res) => {
     try {
         const fuelExpense = await FuelExpense.findByPk(req.params.id, {
-            include: [{
-                model: Driver,
-                as: 'driver',
-                attributes: ['did', 'driver_id', 'driver_name', 'phone_number', 'vehicle_number']
-            }]
+            include: [
+                {
+                    model: Driver,
+                    as: 'driver',
+                    attributes: ['did', 'driver_id', 'driver_name', 'phone_number', 'vehicle_number']
+                },
+                {
+                    model: PetrolBulk,
+                    as: 'petrolBunk',
+                    attributes: ['pbid', 'name', 'location']
+                }
+            ]
         });
         
         if (!fuelExpense) {
@@ -98,11 +113,18 @@ exports.getFuelExpensesByDriverId = async (req, res) => {
     try {
         const fuelExpenses = await FuelExpense.findAll({
             where: { driver_id: req.params.driver_id },
-            include: [{
-                model: Driver,
-                as: 'driver',
-                attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
-            }],
+            include: [
+                {
+                    model: Driver,
+                    as: 'driver',
+                    attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
+                },
+                {
+                    model: PetrolBulk,
+                    as: 'petrolBunk',
+                    attributes: ['pbid', 'name', 'location']
+                }
+            ],
             order: [['date', 'DESC']]
         });
         

@@ -11,10 +11,6 @@ const OrderItem = sequelize.define('OrderItem', {
     order_id: {
         type: DataTypes.STRING,
         allowNull: false,
-        references: {
-            model: 'orders',
-            key: 'oid'
-        }
     },
     product_id: {
         type: DataTypes.INTEGER,

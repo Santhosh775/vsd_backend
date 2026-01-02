@@ -1,146 +1,105 @@
-const Category = require('./categoryModel');
-const Product = require('./productModel');
-const Admin = require('./adminModel');
-const RolesPermission = require('./rolesPermissionModel');
-const Farmer = require('./farmerModel');
-const Supplier = require('./supplierModel');
-const ThirdParty = require('./thirdPartyModel');
-const Vendor = require('./vendorModel');
-const Driver = require('./driverModel');
-const Labour = require('./labourModel');
-const LabourAttendance = require('./labourAttendanceModel');
-const LabourExcessPay = require('./labourExcessPayModel');
-const AdvancePay = require('./advancePayModel');
-const driverAttendance = require('./driverAttendanceModel');
-const excessKM = require('./excessKmModel');
-const fuelExpense = require('./fuelExpenseModel');
-const remark = require('./remarkModel');
+const Inventory = require('./inventoryModel');
+const InventoryCompany = require('./inventoryCompanyModel');
+const InventoryStock = require('./inventoryStockModel');
 const Order = require('./orderModel');
 const OrderItem = require('./orderItemModel');
 const OrderAssignment = require('./orderAssignmentModel');
-const Draft = require('./draftModel');
+const Product = require('./productModel');
+const PreOrder = require('./preOrderModel');
 const Stock = require('./stockModel');
-const Airport = require('./airportModel');
-const PetrolBulk = require('./petrolBulkModel');
-const VegetableAvailability = require('./VegetableAvailability');
+const Category = require('./categoryModel');
+const Driver = require('./driverModel');
+const DriverAdvancePay = require('./advancePayModel');
+const DriverAttendanceHistory = require('./driverAttendanceModel');
+const DriverExcessKm = require('./excessKmModel');
+const DriverFuelExpenses = require('./excessKmModel');
+const DriverRemarks = require('./remarkModel');
+const Farmer = require('./farmerModel');
+const Supplier = require('./supplierModel');
+const ThirdParty = require('./thirdPartyModel');
+const Labour = require('./labourModel');
+const LocalOrder = require('./LocalOrder');
 
-// Admin - RolesPermission relationship
-Admin.hasOne(RolesPermission, {
-    foreignKey: 'aid',
-    as: 'permissions',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
+// Inventory-InventoryStock associations
+Inventory.hasMany(InventoryStock, {
+    foreignKey: 'inventory_id',
+    as: 'stocks'
 });
 
-RolesPermission.belongsTo(Admin, {
-    foreignKey: 'aid',
-    as: 'admin'
+InventoryStock.belongsTo(Inventory, {
+    foreignKey: 'inventory_id',
+    as: 'inventory'
 });
 
-// Category - Product relationship
-Category.hasMany(Product, { 
-    foreignKey: 'category_id', 
-    as: 'products',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
+// InventoryCompany-InventoryStock associations
+InventoryCompany.hasMany(InventoryStock, {
+    foreignKey: 'company_id',
+    as: 'stocks'
 });
 
-Product.belongsTo(Category, { 
-    foreignKey: 'category_id', 
-    as: 'category',
-    allowNull: false
+InventoryStock.belongsTo(InventoryCompany, {
+    foreignKey: 'company_id',
+    as: 'company'
 });
 
-// Order - OrderItem relationship
+// Category-Product associations
+Category.hasMany(Product, {
+    foreignKey: 'category_id',
+    as: 'products'
+});
+
+Product.belongsTo(Category, {
+    foreignKey: 'category_id',
+    as: 'category'
+});
+
+// Order associations
 Order.hasMany(OrderItem, {
     foreignKey: 'order_id',
-    as: 'items',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
+    sourceKey: 'order_id',
+    as: 'items'
 });
 
 OrderItem.belongsTo(Order, {
     foreignKey: 'order_id',
-    as: 'parentOrder'
+    targetKey: 'order_id',
+    as: 'order'
 });
 
-// OrderItem - Product relationship
 OrderItem.belongsTo(Product, {
     foreignKey: 'product_id',
     as: 'product'
 });
 
-// Farmer - Product relationship (many-to-many through product_list)
-// Note: This is a virtual relationship as product_list is stored as JSON in the farmer model
-// We'll handle this relationship manually in the controller
-
-// Supplier - Product relationship (many-to-many through product_list)
-// Note: This is a virtual relationship as product_list is stored as JSON in the supplier model
-// We'll handle this relationship manually in the controller
-
-// ThirdParty - Product relationship (many-to-many through product_list)
-// Note: This is a virtual relationship as product_list is stored as JSON in the third party model
-// We'll handle this relationship manually in the controller
-
-// Driver associations
-Driver.hasMany(AdvancePay, { foreignKey: 'driver_id', sourceKey: 'did', as: 'advancePayments' });
-AdvancePay.belongsTo(Driver, { foreignKey: 'driver_id', targetKey: 'did', as: 'driver' });
-
-Driver.hasMany(driverAttendance, { foreignKey: 'driver_id', as: 'attendanceHistory' });
-driverAttendance.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
-
-Driver.hasMany(excessKM, { foreignKey: 'driver_id', as: 'excessKMs' });
-excessKM.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
-
-Driver.hasMany(fuelExpense, { foreignKey: 'driver_id', as: 'fuelExpenses' });
-fuelExpense.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
-
-Driver.hasMany(remark, { foreignKey: 'driver_id', as: 'remarks' });
-remark.belongsTo(Driver, { foreignKey: 'driver_id', as: 'driver' });
-
-// Labour associations
-Labour.hasMany(LabourAttendance, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'attendanceRecords' });
-LabourAttendance.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'labour' });
-
-Labour.hasMany(LabourExcessPay, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'excessPayRecords' });
-LabourExcessPay.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'labour' });
-
-// // OrderAssignment - Labour relationship
-// OrderAssignment.belongsTo(Labour, { foreignKey: 'labour_id', targetKey: 'lid', as: 'assignedLabour' });
-// Labour.hasMany(OrderAssignment, { foreignKey: 'labour_id', sourceKey: 'lid', as: 'orderAssignments' });
-
-// // OrderAssignment - LabourAttendance relationship
-// OrderAssignment.belongsTo(LabourAttendance, { foreignKey: 'attendance_id', targetKey: 'id', as: 'labourAttendance' });
-// LabourAttendance.hasMany(OrderAssignment, { foreignKey: 'attendance_id', sourceKey: 'id', as: 'orderAssignments' });
-
-// Order - Stock relationship
-Order.hasMany(Stock, {
-    foreignKey: 'order_id',
-    as: 'stockItems',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
+Product.hasMany(OrderItem, {
+    foreignKey: 'product_id',
+    as: 'orderItems'
 });
 
-Stock.belongsTo(Order, {
+// PreOrder associations
+Order.hasMany(PreOrder, {
     foreignKey: 'order_id',
+    sourceKey: 'order_id',
+    as: 'preOrders'
+});
+
+PreOrder.belongsTo(Order, {
+    foreignKey: 'order_id',
+    targetKey: 'order_id',
     as: 'order'
 });
 
-// // OrderAssignment - Airport relationship
-// OrderAssignment.belongsTo(Airport, {
-//     foreignKey: 'a_id',
-//     as: 'airport'
-// });
-
-// Airport.hasMany(OrderAssignment, {
-//     foreignKey: 'a_id',
-//     as: 'orderAssignments'
-// });
-
-// Define associations
+// OrderAssignment associations
 OrderAssignment.belongsTo(Order, {
     foreignKey: 'order_id',
+    targetKey: 'order_id',
     as: 'order'
+});
+
+Order.hasOne(OrderAssignment, {
+    foreignKey: 'order_id',
+    sourceKey: 'order_id',
+    as: 'assignment'
 });
 
 OrderAssignment.belongsTo(Driver, {
@@ -148,45 +107,106 @@ OrderAssignment.belongsTo(Driver, {
     as: 'airportDriver'
 });
 
-// Farmer - VegetableAvailability relationship
-Farmer.hasMany(VegetableAvailability, {
-    foreignKey: 'farmer_id',
-    sourceKey: 'fid',
-    as: 'vegetableAvailabilities',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
+Driver.hasMany(OrderAssignment, {
+    foreignKey: 'airport_driver_id',
+    as: 'assignments'
 });
 
-VegetableAvailability.belongsTo(Farmer, {
-    foreignKey: 'farmer_id',
-    targetKey: 'fid',
-    as: 'farmer'
+// LocalOrder-Driver associations
+LocalOrder.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    as: 'driver'
+});
+
+Driver.hasMany(LocalOrder, {
+    foreignKey: 'driver_id',
+    as: 'localOrders'
+});
+
+// Driver related tables associations
+Driver.hasMany(DriverAdvancePay, {
+    foreignKey: 'driver_id',
+    as: 'advancePayments'
+});
+
+DriverAdvancePay.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    as: 'advancePayDriver'
+});
+
+Driver.hasMany(DriverAttendanceHistory, {
+    foreignKey: 'driver_id',
+    as: 'attendanceHistory'
+});
+
+DriverAttendanceHistory.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    as: 'driver'
+});
+
+Driver.hasMany(DriverExcessKm, {
+    foreignKey: 'driver_id',
+    as: 'excessKm'
+});
+
+DriverExcessKm.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    as: 'excessKmDriver'
+});
+
+Driver.hasMany(DriverFuelExpenses, {
+    foreignKey: 'driver_id',
+    as: 'fuelExpenses'
+});
+
+DriverFuelExpenses.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    as: 'fuelExpenseDriver'
+});
+
+Driver.hasMany(DriverRemarks, {
+    foreignKey: 'driver_id',
+    as: 'remarks'
+});
+
+DriverRemarks.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    as: 'remarkDriver'
+});
+
+// LocalOrder associations
+LocalOrder.belongsTo(Order, {
+    foreignKey: 'order_id',
+    targetKey: 'order_id',
+    as: 'order'
+});
+
+Order.hasOne(LocalOrder, {
+    foreignKey: 'order_id',
+    sourceKey: 'order_id',
+    as: 'localOrder'
 });
 
 module.exports = {
-    Category,
-    Product,
-    Admin,
-    RolesPermission,
-    Farmer,
-    Supplier,
-    ThirdParty,
-    Vendor,
-    Driver,
-    Labour,
-    LabourAttendance,
-    LabourExcessPay,
-    AdvancePay,
-    driverAttendance,
-    excessKM,
-    fuelExpense,
-    remark,
+    Inventory,
+    InventoryCompany,
+    InventoryStock,
     Order,
     OrderItem,
     OrderAssignment,
-    Draft,
+    Product,
+    PreOrder,
     Stock,
-    Airport,
-    PetrolBulk,
-    VegetableAvailability
+    Category,
+    Driver,
+    DriverAdvancePay,
+    DriverAttendanceHistory,
+    DriverExcessKm,
+    DriverFuelExpenses,
+    DriverRemarks,
+    Farmer,
+    Supplier,
+    ThirdParty,
+    Labour,
+    LocalOrder
 };

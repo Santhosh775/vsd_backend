@@ -5,6 +5,7 @@ const {
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,
+    updateStage4Assignment,
     saveItemAssignmentUpdate,
     getItemAssignments,
     getAssignmentOptions,
@@ -24,6 +25,9 @@ router.put('/:orderId/stage2', updateStage2Assignment);
 
 // Update stage 3 assignment (airport driver)
 router.put('/:orderId/stage3', updateStage3Assignment); 
+
+// Update stage 4 assignment (review)
+router.put('/:orderId/stage4', updateStage4Assignment); 
 
 // Save item assignment by order item ID
 router.post('/:orderId/item-assignment/:oiid', saveItemAssignmentUpdate);

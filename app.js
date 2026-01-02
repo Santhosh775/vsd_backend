@@ -55,12 +55,16 @@ const orderRoute = require('./router/orderRoute');
 const orderAssignmentRoute = require('./router/orderAssignmentRoute');
 const draftRoute = require('./router/draftRoute');
 const inventoryRoute = require('./router/inventoryRoute');
+const inventoryCompanyRoute = require('./router/inventoryCompanyRoute');
+const inventoryStockRoute = require('./router/inventoryStockRoute');
 const rolesPermissionRoute = require('./router/rolesPermissionRoute');
 const airportRoute = require('./router/airportRoute');
 const petrolBulkRoute = require('./router/petrolBulkRoute');
 const labourRateRoute = require('./router/labourRateRoute');
 const vegetableAvailabilityRoute = require('./router/vegetableAvailabilityRoute');
 const preOrderRoute = require('./router/preOrderRoute');
+const sellStockRoute = require('./router/sellStockRoute');
+const localOrderRoute = require('./router/localOrderRoute');
 
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
@@ -84,12 +88,16 @@ app.use('/api/v1/order', orderRoute);
 app.use('/api/v1/order-assignment', orderAssignmentRoute);
 app.use('/api/v1/draft', draftRoute);
 app.use('/api/v1/inventory', inventoryRoute);
+app.use('/api/v1/inventory-company', inventoryCompanyRoute);
+app.use('/api/v1/inventory-stock', inventoryStockRoute);
 app.use('/api/v1/roles-permissions', rolesPermissionRoute);
 app.use('/api/v1/airport', airportRoute);
 app.use('/api/v1/petrol-bulk', petrolBulkRoute);
 app.use('/api/v1/labour-rate', labourRateRoute);
 app.use('/api/v1/vegetable-availability', vegetableAvailabilityRoute);
 app.use('/api/v1/preorders', preOrderRoute);
+app.use('/api/v1/sell-stock', sellStockRoute);
+app.use('/api/v1/local-order', localOrderRoute);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

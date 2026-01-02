@@ -13,41 +13,30 @@ const createOrderValidation = [
         .isString()
         .withMessage('Customer ID must be a string'),
 
-    body('phoneNumber')
-        .optional({ nullable: true })
-        .isMobilePhone()
-        .withMessage('Please provide a valid phone number'),
-
-    body('email')
-        .optional({ nullable: true })
-        .isEmail()
-        .withMessage('Please provide a valid email address'),
-
-    body('alternateContact')
-        .optional({ nullable: true })
-        .isMobilePhone()
-        .withMessage('Please provide a valid alternate contact number'),
-
-    body('deliveryAddress')
-        .notEmpty()
-        .withMessage('Delivery address is required')
-        .isLength({ min: 10 })
-        .withMessage('Delivery address must be at least 10 characters long'),
-
-    body('neededByDate')
+    body('orderReceivedDate')
         .optional({ nullable: true })
         .isISO8601()
         .withMessage('Please provide a valid date in YYYY-MM-DD format'),
 
-    body('preferredTime')
+    body('packingDate')
         .optional({ nullable: true })
-        .isIn(['morning', 'afternoon', 'evening'])
-        .withMessage('Preferred time must be morning, afternoon, or evening'),
+        .isISO8601()
+        .withMessage('Please provide a valid date in YYYY-MM-DD format'),
 
-    body('priority')
+    body('packingDay')
         .optional({ nullable: true })
-        .isIn(['Low', 'Normal', 'High', 'Urgent'])
-        .withMessage('Priority must be Low, Normal, High, or Urgent'),
+        .isString()
+        .withMessage('Packing day must be a string'),
+
+    body('orderType')
+        .optional({ nullable: true })
+        .isIn(['flight', 'local'])
+        .withMessage('Order type must be flight or local'),
+
+    body('detailsComment')
+        .optional({ nullable: true })
+        .isString()
+        .withMessage('Details/Comment must be a string'),
 
     body('products')
         .optional({ nullable: true })
@@ -60,6 +49,7 @@ const createOrderValidation = [
         .withMessage('Product ID must be a positive integer'),
 
     body('products.*.numBoxes')
+        .optional({ nullable: true })
         .isString()
         .withMessage('Number of boxes must be a non-negative string'),
 
@@ -105,40 +95,30 @@ const updateOrderValidation = [
         .isString()
         .withMessage('Customer ID must be a string'),
 
-    body('phoneNumber')
-        .optional({ nullable: true })
-        .isMobilePhone()
-        .withMessage('Please provide a valid phone number'),
-
-    body('email')
-        .optional({ nullable: true })
-        .isEmail()
-        .withMessage('Please provide a valid email address'),
-
-    body('alternateContact')
-        .optional({ nullable: true })
-        .isMobilePhone()
-        .withMessage('Please provide a valid alternate contact number'),
-
-    body('deliveryAddress')
-        .optional({ nullable: true })
-        .isLength({ min: 10 })
-        .withMessage('Delivery address must be at least 10 characters long'),
-
-    body('neededByDate')
+    body('orderReceivedDate')
         .optional({ nullable: true })
         .isISO8601()
         .withMessage('Please provide a valid date in YYYY-MM-DD format'),
 
-    body('preferredTime')
+    body('packingDate')
         .optional({ nullable: true })
-        .isIn(['morning', 'afternoon', 'evening'])
-        .withMessage('Preferred time must be morning, afternoon, or evening'),
+        .isISO8601()
+        .withMessage('Please provide a valid date in YYYY-MM-DD format'),
 
-    body('priority')
+    body('packingDay')
         .optional({ nullable: true })
-        .isIn(['Low', 'Normal', 'High', 'Urgent'])
-        .withMessage('Priority must be Low, Normal, High, or Urgent'),
+        .isString()
+        .withMessage('Packing day must be a string'),
+
+    body('orderType')
+        .optional({ nullable: true })
+        .isIn(['flight', 'local'])
+        .withMessage('Order type must be flight or local'),
+
+    body('detailsComment')
+        .optional({ nullable: true })
+        .isString()
+        .withMessage('Details/Comment must be a string'),
 
     body('products')
         .optional({ nullable: true })

@@ -31,10 +31,20 @@ const Product = sequelize.define('Product', {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     },
+    price_date: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: []
+    },
     product_status: {
         type: DataTypes.ENUM('active', 'inactive'),
         allowNull: false,
         defaultValue: 'active'
+    },
+    default_status: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     }
 }, {
     tableName: 'products',

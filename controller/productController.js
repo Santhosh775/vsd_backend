@@ -195,7 +195,9 @@ exports.createProduct = async (req, res) => {
             product_image,
             category_id,
             unit,
-            current_price
+            current_price,
+            default_status,
+            product_status
         });
         
         res.status(201).json({
@@ -272,7 +274,7 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { product_name, category_id, unit, current_price, product_status } = req.body;
+        const { product_name, category_id, unit, current_price, product_status, default_status } = req.body;
         
         const product = await Product.findByPk(id);
         if (!product) {
@@ -292,7 +294,42 @@ exports.updateProduct = async (req, res) => {
             }
         }
         
-        let updateData = { product_name, category_id, unit, current_price, product_status };
+        let updateData = { product_name, category_id, unit, product_status, default_status };
+        
+        // Handle price update with history
+        if (current_price !== undefined && current_price !== null) {
+            const today = new Date().toISOString().split('T')[0];
+            let priceHistory = product.price_date;
+            
+            // Ensure priceHistory is an array
+            if (!priceHistory || typeof priceHistory === 'string') {
+                try {
+                    priceHistory = priceHistory ? JSON.parse(priceHistory) : [];
+                } catch (e) {
+                    priceHistory = [];
+                }
+            } else if (!Array.isArray(priceHistory)) {
+                priceHistory = [];
+            }
+            
+            // Check if price already updated today
+            const todayIndex = priceHistory.findIndex(entry => entry && entry.date === today);
+            
+            if (todayIndex >= 0) {
+                // Update today's price
+                priceHistory[todayIndex].price = parseFloat(current_price);
+            } else {
+                // Add new price entry
+                priceHistory.push({
+                    date: today,
+                    price: parseFloat(current_price)
+                });
+            }
+            
+            updateData.current_price = current_price;
+            updateData.price_date = priceHistory;
+        }
+        
         if (req.file) {
             updateData.product_image = `/uploads/products/${req.file.filename}`;
         }

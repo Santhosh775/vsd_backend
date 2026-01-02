@@ -1,8 +1,10 @@
 const Inventory = require('../model/inventoryModel');
+const InventoryStock = require('../model/inventoryStockModel');
+const { sequelize } = require('../config/db');
 
 exports.createInventory = async (req, res) => {
     try {
-        const { name, category, weight, unit, price, color } = req.body;
+        const { name, category, weight, unit, color, quantity } = req.body;
         
         const newInventory = await Inventory.create({
             name,
@@ -10,7 +12,7 @@ exports.createInventory = async (req, res) => {
             weight: category === 'Tape' ? null : weight,
             unit: category === 'Tape' ? null : unit,
             color: category === 'Tape' ? color : null,
-            price
+            quantity: quantity || 0
         });
         
         res.status(201).json({
@@ -92,7 +94,7 @@ exports.getInventoryById = async (req, res) => {
 exports.updateInventory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, category, weight, unit, price, color } = req.body;
+        const { name, category, weight, unit, color, quantity } = req.body;
         
         const inventory = await Inventory.findByPk(id);
         if (!inventory) {
@@ -108,7 +110,7 @@ exports.updateInventory = async (req, res) => {
             weight: category === 'Tape' ? null : weight,
             unit: category === 'Tape' ? null : unit,
             color: category === 'Tape' ? color : null,
-            price
+            quantity: quantity !== undefined ? quantity : inventory.quantity
         });
         
         res.status(200).json({

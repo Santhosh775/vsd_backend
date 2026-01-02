@@ -6,6 +6,11 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         primaryKey: true
     },
+    order_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
     customer_name: {
         type: DataTypes.STRING,
         allowNull: false
@@ -14,45 +19,31 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         allowNull: true
     },
-    phone_number: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        validate: {
-            isEmail: true
-        }
-    },
-    alternate_contact: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    delivery_address: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    needed_by_date: {
+    order_received_date: {
         type: DataTypes.DATEONLY,
         allowNull: true
     },
-    preferred_time: {
-        type: DataTypes.ENUM('morning', 'afternoon', 'evening'),
+    packing_date: {
+        type: DataTypes.DATEONLY,
         allowNull: true
     },
-    priority: {
-        type: DataTypes.ENUM('Low', 'Normal', 'High', 'Urgent'),
-        defaultValue: 'Normal'
+    packing_day: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    order_type: {
+        type: DataTypes.ENUM('flight', 'local'),
+        defaultValue: 'local'
+    },
+    details_comment: {
+        type: DataTypes.TEXT,
+        allowNull: true
     },
     order_status: {
         type: DataTypes.ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'),
         defaultValue: 'pending'
     },
-    total_amount: {
-        type: DataTypes.DECIMAL(10, 2),
-        defaultValue: 0.00
-    }
+
 }, {
     tableName: 'orders',
     timestamps: true,

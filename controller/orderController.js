@@ -1,6 +1,17 @@
 const { Order, OrderItem, Product } = require('../model/associations');
+const Inventory = require('../model/inventoryModel');
 const { sequelize } = require('../config/db');
 const { handleValidationErrors } = require('../validator/orderValidator');
+
+// Generate order_id from customer name and ordering date
+const generateOrderId = (customerName, orderingDate) => {
+    const name = customerName.replace(/\s+/g, '').toUpperCase();
+    const date = new Date(orderingDate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${name}_${day}-${month}-${year}`;
+};
 
 // Helper function to transform order items according to the specification
 const transformOrderItems = (items) => {
@@ -29,6 +40,62 @@ const transformOrderItems = (items) => {
     });
 };
 
+// Helper function to reduce inventory based on order items
+const reduceInventory = async (orderItems, transaction) => {
+    for (const item of orderItems) {
+        if (item.num_boxes && item.packing_type) {
+            const numBoxesStr = String(item.num_boxes);
+            const match = numBoxesStr.match(/^(\d+(?:\.\d+)?)(box|bag)?/i);
+            const numBoxes = match ? parseFloat(match[1]) : 0;
+            
+            if (numBoxes > 0) {
+                const inventoryItem = await Inventory.findOne({
+                    where: {
+                        name: item.packing_type
+                    },
+                    transaction
+                });
+                
+                if (inventoryItem && inventoryItem.quantity >= numBoxes) {
+                    await inventoryItem.update({
+                        quantity: parseFloat(inventoryItem.quantity) - numBoxes
+                    }, { transaction });
+                } else {
+                    throw new Error(`Insufficient ${item.packing_type} inventory. Required: ${numBoxes}, Available: ${inventoryItem ? inventoryItem.quantity : 0}`);
+                }
+            }
+        }
+    }
+};
+
+// Helper function to restore inventory (for updates)
+const restoreInventory = async (orderItems, transaction) => {
+    for (const item of orderItems) {
+        if (item.num_boxes && item.packing_type) {
+            const numBoxesStr = String(item.num_boxes);
+            const match = numBoxesStr.match(/^(\d+(?:\.\d+)?)(box|bag)?/i);
+            const numBoxes = match ? parseFloat(match[1]) : 0;
+            
+            if (numBoxes > 0) {
+                const inventoryItem = await Inventory.findOne({
+                    where: {
+                        name: item.packing_type
+                    },
+                    transaction
+                });
+                
+                if (inventoryItem) {
+                    await inventoryItem.update({
+                        quantity: parseFloat(inventoryItem.quantity) + numBoxes
+                    }, { transaction });
+                }
+            }
+        }
+    }
+};
+
+
+
 // Helper function to transform orders according to the specification
 const transformOrder = (order) => {
     const transformedOrder = order.toJSON();
@@ -39,8 +106,6 @@ const transformOrder = (order) => {
     
     return transformedOrder;
 };
-
-
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -54,25 +119,24 @@ const createOrder = async (req, res) => {
         const {
             customerName,
             customerId,
-            phoneNumber,
-            email,
-            alternateContact,
-            deliveryAddress,
-            neededByDate,
-            preferredTime,
-            priority,
+            orderReceivedDate,
+            packingDate,
+            packingDay,
+            orderType,
+            detailsComment,
             products
         } = req.body;
 
+        const orderId = generateOrderId(customerName, orderReceivedDate);
+
         const orderData = {
+            order_id: orderId,
             customer_name: customerName,
-            phone_number: phoneNumber,
-            email: email,
-            alternate_contact: alternateContact,
-            delivery_address: deliveryAddress,
-            needed_by_date: neededByDate,
-            preferred_time: preferredTime,
-            priority: priority
+            order_received_date: orderReceivedDate,
+            packing_date: packingDate,
+            packing_day: packingDay,
+            order_type: orderType || 'local',
+            details_comment: detailsComment
         };
 
         if (customerId !== undefined && customerId !== null) {
@@ -110,21 +174,27 @@ const createOrder = async (req, res) => {
                     totalPrice = netWeight * marketPrice;
                 }
                 
+                // For local orders without detailed info, store only product and net weight
+                const hasDetailedInfo = product.numBoxes || product.packingType || product.grossWeight || product.boxWeight;
+                
                 return {
-                    order_id: order.oid,
+                    order_id: orderId,
                     product_id: product.productId || null,
                     product_name: productDetails ? productDetails.product_name : null,
                     market_price: productDetails ? productDetails.current_price : 0.00,
                     total_price: totalPrice,
-                    num_boxes: product.numBoxes,
-                    packing_type: product.packingType,
+                    num_boxes: hasDetailedInfo ? product.numBoxes : null,
+                    packing_type: hasDetailedInfo ? product.packingType : null,
                     net_weight: product.netWeight,
-                    gross_weight: product.grossWeight,
-                    box_weight: product.boxWeight
+                    gross_weight: hasDetailedInfo ? product.grossWeight : null,
+                    box_weight: hasDetailedInfo ? product.boxWeight : null
                 };
             });
 
             await OrderItem.bulkCreate(orderItems, { transaction: t });
+            
+            // Reduce inventory based on order items
+            await reduceInventory(orderItems, t);
         }
 
         await t.commit();
@@ -247,13 +317,11 @@ const updateOrder = async (req, res) => {
         const {
             customerName,
             customerId,
-            phoneNumber,
-            email,
-            alternateContact,
-            deliveryAddress,
-            neededByDate,
-            preferredTime,
-            priority,
+            orderReceivedDate,
+            packingDate,
+            packingDay,
+            orderType,
+            detailsComment,
             products
         } = req.body;
 
@@ -268,13 +336,11 @@ const updateOrder = async (req, res) => {
 
         const updateData = {
             customer_name: customerName,
-            phone_number: phoneNumber,
-            email: email,
-            alternate_contact: alternateContact,
-            delivery_address: deliveryAddress,
-            needed_by_date: neededByDate,
-            preferred_time: preferredTime,
-            priority: priority
+            order_received_date: orderReceivedDate,
+            packing_date: packingDate,
+            packing_day: packingDay,
+            order_type: orderType || 'local',
+            details_comment: detailsComment
         };
 
         if (customerId !== undefined && customerId !== null) {
@@ -284,8 +350,17 @@ const updateOrder = async (req, res) => {
         await order.update(updateData, { transaction: t });
 
         if (products && products.length > 0) {
+            // Get existing order items to restore inventory
+            const existingOrderItems = await OrderItem.findAll({
+                where: { order_id: order.order_id },
+                transaction: t
+            });
+            
+            // Restore inventory for existing items
+            await restoreInventory(existingOrderItems, t);
+            
             await OrderItem.destroy({
-                where: { order_id: id }
+                where: { order_id: order.order_id }
             }, { transaction: t });
 
             const productIds = products
@@ -316,21 +391,27 @@ const updateOrder = async (req, res) => {
                     totalPrice = netWeight * marketPrice;
                 }
                 
+                // For local orders without detailed info, store only product and net weight
+                const hasDetailedInfo = product.numBoxes || product.packingType || product.grossWeight || product.boxWeight;
+                
                 return {
-                    order_id: id,
+                    order_id: order.order_id,
                     product_id: product.productId || null,
                     product_name: productDetails ? productDetails.product_name : null,
                     market_price: productDetails ? productDetails.current_price : 0.00,
                     total_price: totalPrice,
-                    num_boxes: product.numBoxes,
-                    packing_type: product.packingType,
+                    num_boxes: hasDetailedInfo ? product.numBoxes : null,
+                    packing_type: hasDetailedInfo ? product.packingType : null,
                     net_weight: product.netWeight,
-                    gross_weight: product.grossWeight,
-                    box_weight: product.boxWeight
+                    gross_weight: hasDetailedInfo ? product.grossWeight : null,
+                    box_weight: hasDetailedInfo ? product.boxWeight : null
                 };
             });
 
             await OrderItem.bulkCreate(orderItems, { transaction: t });
+            
+            // Reduce inventory for new order items
+            await reduceInventory(orderItems, t);
         }
 
         await t.commit();
@@ -413,5 +494,6 @@ module.exports = {
     getAllOrders,
     getOrderById,
     updateOrder,
-    deleteOrder
+    deleteOrder,
+    generateOrderId
 };

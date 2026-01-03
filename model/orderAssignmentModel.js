@@ -118,8 +118,7 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
     stage4_status: {
         type: DataTypes.ENUM('pending', 'in_progress', 'completed'),
         defaultValue: 'pending'
-    },
-    
+    },   
 }, {
     tableName: 'order_assignments',
     timestamps: true,

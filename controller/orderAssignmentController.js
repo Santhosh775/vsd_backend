@@ -406,24 +406,26 @@ const updateStage3Assignment = async (req, res) => {
         }
         
         await assignment.update({
-            stage3_assignments: products.map(p => ({
-                id: p.id,
-                oiid: p.oiid,
-                product: p.product,
-                grossWeight: p.grossWeight,
-                totalBoxes: p.totalBoxes || 0,
-                labour: p.labour || '-',
-                ct: p.ct || '',
-                noOfPkgs: p.noOfPkgs || '',
-                selectedDriver: p.selectedDriver || '',
-                airportName: p.airportName || '',
-                airportLocation: p.airportLocation || '',
-                vehicleNumber: p.vehicleNumber || '',
-                phoneNumber: p.phoneNumber || '',
-                vehicleCapacity: p.vehicleCapacity || '',
-                status: p.status || 'pending',
-                assignmentIndex: p.assignmentIndex || 0
-            })),
+            stage3_data: {
+                products: products.map(p => ({
+                    id: p.id,
+                    oiid: p.oiid,
+                    product: p.product,
+                    grossWeight: p.grossWeight,
+                    totalBoxes: p.totalBoxes || 0,
+                    labour: p.labour || '-',
+                    ct: p.ct || '',
+                    noOfPkgs: p.noOfPkgs || '',
+                    selectedDriver: p.selectedDriver || '',
+                    airportName: p.airportName || '',
+                    airportLocation: p.airportLocation || '',
+                    vehicleNumber: p.vehicleNumber || '',
+                    phoneNumber: p.phoneNumber || '',
+                    vehicleCapacity: p.vehicleCapacity || '',
+                    status: p.status || 'pending',
+                    assignmentIndex: p.assignmentIndex || 0
+                }))
+            },
             stage3_summary_data: stage3Summary,
             stage3_status: 'completed'
         });
@@ -452,7 +454,20 @@ const updateStage4Assignment = async (req, res) => {
         const { orderId } = req.params;
         const stage4Data = req.body;
         
-        console.log('Received Stage 4 data:', JSON.stringify(stage4Data, null, 2));
+        // Validate market prices
+        if (stage4Data.reviewData?.productRows) {
+            const invalidPrices = stage4Data.reviewData.productRows.filter(row => 
+                !row.marketPrice || row.marketPrice === 0
+            );
+            
+            if (invalidPrices.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot submit Stage 4: Market prices are not updated for some products. Please update product prices before proceeding.',
+                    invalidProducts: invalidPrices.map(p => p.product_name || p.product)
+                });
+            }
+        }
         
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
         
@@ -463,20 +478,13 @@ const updateStage4Assignment = async (req, res) => {
             });
         }
         
-        // Process and store the stage 4 data
-        const processedStage4Data = {
-            reviewData: stage4Data.reviewData || {},
-            status: stage4Data.status || 'completed',
-            completedAt: new Date().toISOString(),
-            orderId: orderId
-        };
-        
         await assignment.update({
-            stage4_data: processedStage4Data,
+            stage4_data: {
+                ...stage4Data,
+                completedAt: new Date()
+            },
             stage4_status: 'completed'
         });
-        
-        console.log('Stage 4 data saved successfully');
         
         res.status(200).json({
             success: true,

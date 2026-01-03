@@ -113,6 +113,11 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
     stage4_data: {
         type: DataTypes.JSON,
         allowNull: true,
+        comment: 'Stage 4 review data with all stages information'
+    },
+    stage4_status: {
+        type: DataTypes.ENUM('pending', 'in_progress', 'completed'),
+        defaultValue: 'pending'
     },
     
 }, {

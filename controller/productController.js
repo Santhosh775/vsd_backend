@@ -174,7 +174,7 @@ exports.deleteCategory = async (req, res) => {
 // Product Controllers
 exports.createProduct = async (req, res) => {
     try {
-        const { product_name, category_id, unit, current_price, product_status, default_status } = req.body;
+        const { product_name, category_id, unit, current_price, product_status, default_status, packing_type } = req.body;
         
         // Check if category exists
         const category = await Category.findByPk(category_id);
@@ -197,7 +197,8 @@ exports.createProduct = async (req, res) => {
             unit,
             current_price,
             default_status,
-            product_status
+            product_status,
+            packing_type
         });
         
         res.status(201).json({
@@ -274,7 +275,7 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { product_name, category_id, unit, current_price, product_status, default_status } = req.body;
+        const { product_name, category_id, unit, current_price, product_status, default_status, packing_type } = req.body;
         
         const product = await Product.findByPk(id);
         if (!product) {
@@ -294,7 +295,7 @@ exports.updateProduct = async (req, res) => {
             }
         }
         
-        let updateData = { product_name, category_id, unit, product_status, default_status };
+        let updateData = { product_name, category_id, unit, product_status, default_status, packing_type };
         
         // Handle price update with history
         if (current_price !== undefined && current_price !== null) {

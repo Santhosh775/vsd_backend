@@ -45,7 +45,11 @@ const Product = sequelize.define('Product', {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
-    }
+    },
+    packing_type: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    }       
 }, {
     tableName: 'products',
     timestamps: true,

@@ -159,6 +159,34 @@ const updateStage2Assignment = async (req, res) => {
         }
 
         const isEdit = assignment.stage2_status === 'completed';
+        
+        // Restore tape inventory if editing
+        if (isEdit && assignment.stage2_data?.productAssignments) {
+            const oldAssignments = assignment.stage2_data.productAssignments;
+            const tapeUsageMap = {};
+            
+            oldAssignments.forEach(pa => {
+                if (pa.tapeColor && pa.tapeQuantity) {
+                    const qty = parseFloat(pa.tapeQuantity) || 0;
+                    if (qty > 0) {
+                        tapeUsageMap[pa.tapeColor] = (tapeUsageMap[pa.tapeColor] || 0) + qty;
+                    }
+                }
+            });
+            
+            const { Inventory } = require('../model/associations');
+            for (const [tapeColor, quantity] of Object.entries(tapeUsageMap)) {
+                const tape = await Inventory.findOne({
+                    where: { category: 'Tape', color: tapeColor },
+                    transaction
+                });
+                if (tape) {
+                    await tape.update({
+                        quantity: parseFloat(tape.quantity) + quantity
+                    }, { transaction });
+                }
+            }
+        }
 
         const order = await Order.findByPk(orderId, {
             include: [{ model: OrderItem, as: 'items' }],
@@ -197,6 +225,45 @@ const updateStage2Assignment = async (req, res) => {
 
         const stage2Assignments = [];
         const today = new Date().toISOString().split('T')[0];
+        
+        // Reduce tape inventory
+        const tapeUsageMap = {};
+        productAssignments.forEach(pa => {
+            if (pa.tapeColor && pa.tapeQuantity) {
+                const qty = parseFloat(pa.tapeQuantity) || 0;
+                if (qty > 0) {
+                    tapeUsageMap[pa.tapeColor] = (tapeUsageMap[pa.tapeColor] || 0) + qty;
+                }
+            }
+        });
+        
+        const { Inventory } = require('../model/associations');
+        for (const [tapeColor, quantity] of Object.entries(tapeUsageMap)) {
+            const tape = await Inventory.findOne({
+                where: { category: 'Tape', color: tapeColor },
+                transaction
+            });
+            
+            if (!tape) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Tape color "${tapeColor}" not found in inventory`
+                });
+            }
+            
+            if (parseFloat(tape.quantity) < quantity) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient tape inventory for "${tapeColor}". Required: ${quantity}, Available: ${tape.quantity}`
+                });
+            }
+            
+            await tape.update({
+                quantity: parseFloat(tape.quantity) - quantity
+            }, { transaction });
+        }
 
         const processedReuse = {};
         for (const [oiid, group] of Object.entries(productGroups)) {
@@ -284,7 +351,28 @@ const updateStage2Assignment = async (req, res) => {
         if (summaryData) {
             stage2Summary = {
                 assignment_id: assignment.assignment_id,
-                labourAssignments: summaryData.labourAssignments,
+                labourAssignments: summaryData.labourAssignments?.map(la => ({
+                    labour: la.labour,
+                    labourId: la.labourId,
+                    totalPicked: la.totalPicked,
+                    totalWastage: la.totalWastage,
+                    totalReuse: la.totalReuse,
+                    assignments: la.assignments?.map(a => ({
+                        product: a.product,
+                        entityType: a.entityType,
+                        entityName: a.entityName,
+                        tapeColor: a.tapeColor,
+                        pickedQuantity: a.pickedQuantity,
+                        wastage: a.wastage,
+                        reuse: a.reuse,
+                        packedAmount: a.packedAmount,
+                        status: a.status,
+                        startTime: a.startTime,
+                        endTime: a.endTime,
+                        packedBoxes: a.packedBoxes || 0,
+                        oiid: a.oiid
+                    }))
+                })),
                 totalLabours: summaryData.totalLabours,
                 totalProducts: summaryData.totalProducts,
                 totalPicked: summaryData.totalPicked,

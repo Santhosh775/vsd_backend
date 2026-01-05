@@ -135,7 +135,7 @@ const createOrder = async (req, res) => {
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
             packing_day: packingDay,
-            order_type: orderType || 'local',
+            order_type: orderType === 'flight' ? 'BOX ORDER' : 'LOCAL GRADE ORDER',
             details_comment: detailsComment
         };
 
@@ -339,7 +339,7 @@ const updateOrder = async (req, res) => {
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
             packing_day: packingDay,
-            order_type: orderType || 'local',
+            order_type: orderType === 'flight' ? 'BOX ORDER' : 'LOCAL GRADE ORDER',
             details_comment: detailsComment
         };
 

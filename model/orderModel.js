@@ -32,8 +32,8 @@ const Order = sequelize.define('Order', {
         allowNull: true
     },
     order_type: {
-        type: DataTypes.ENUM('flight', 'local'),
-        defaultValue: 'local'
+        type: DataTypes.ENUM('BOX ORDER', 'LOCAL GRADE ORDER'),
+        defaultValue: 'LOCAL GRADE ORDER'
     },
     details_comment: {
         type: DataTypes.TEXT,

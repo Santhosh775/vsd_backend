@@ -27,11 +27,6 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
         type: DataTypes.ENUM('pending', 'in_progress', 'completed'),
         defaultValue: 'pending'
     },
-    collection_type: {
-        type: DataTypes.ENUM('Box', 'Bag'),
-        allowNull: false,
-        defaultValue: 'Box'
-    },
     
     // Product assignments - Store as form entries
     product_assignments: {

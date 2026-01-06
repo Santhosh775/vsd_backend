@@ -43,8 +43,7 @@ const getOrderAssignment = async (req, res) => {
             }
             
             const newAssignment = await OrderAssignment.create({
-                order_id: orderId,
-                collection_type: 'Box' // Default value
+                order_id: orderId
             });
             
             return res.status(200).json({
@@ -82,15 +81,11 @@ const getOrderAssignment = async (req, res) => {
 const updateStage1Assignment = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { orderType, collectionType, productAssignments, deliveryRoutes, summaryData } = req.body;
-        
-        if (!collectionType || !['Box', 'Bag'].includes(collectionType)) {
-            return res.status(400).json({ success: false, message: 'Invalid collection type' });
-        }
+        const { orderType, productAssignments, deliveryRoutes, summaryData } = req.body;
 
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
         if (!assignment) {
-            assignment = await OrderAssignment.create({ order_id: orderId, collection_type: collectionType });
+            assignment = await OrderAssignment.create({ order_id: orderId });
         }
         
         // Process product assignments with entity details
@@ -127,7 +122,6 @@ const updateStage1Assignment = async (req, res) => {
         // Update assignment
         await assignment.update({
             order_type: orderType,
-            collection_type: collectionType,
             product_assignments: processedAssignments,
             delivery_routes: processedRoutes,
             stage1_summary_data: summaryData,
@@ -160,32 +154,42 @@ const updateStage2Assignment = async (req, res) => {
 
         const isEdit = assignment.stage2_status === 'completed';
         
-        // Restore tape inventory if editing
+        // Calculate tape changes for editing
+        let tapeChanges = {};
         if (isEdit && assignment.stage2_data?.productAssignments) {
-            const oldAssignments = assignment.stage2_data.productAssignments;
-            const tapeUsageMap = {};
+            const oldTapeUsage = {};
+            const newTapeUsage = {};
             
-            oldAssignments.forEach(pa => {
+            // Calculate old tape usage
+            assignment.stage2_data.productAssignments.forEach(pa => {
                 if (pa.tapeColor && pa.tapeQuantity) {
                     const qty = parseFloat(pa.tapeQuantity) || 0;
                     if (qty > 0) {
-                        tapeUsageMap[pa.tapeColor] = (tapeUsageMap[pa.tapeColor] || 0) + qty;
+                        oldTapeUsage[pa.tapeColor] = (oldTapeUsage[pa.tapeColor] || 0) + qty;
                     }
                 }
             });
             
-            const { Inventory } = require('../model/associations');
-            for (const [tapeColor, quantity] of Object.entries(tapeUsageMap)) {
-                const tape = await Inventory.findOne({
-                    where: { category: 'Tape', color: tapeColor },
-                    transaction
-                });
-                if (tape) {
-                    await tape.update({
-                        quantity: parseFloat(tape.quantity) + quantity
-                    }, { transaction });
+            // Calculate new tape usage
+            productAssignments.forEach(pa => {
+                if (pa.tapeColor && pa.tapeQuantity) {
+                    const qty = parseFloat(pa.tapeQuantity) || 0;
+                    if (qty > 0) {
+                        newTapeUsage[pa.tapeColor] = (newTapeUsage[pa.tapeColor] || 0) + qty;
+                    }
                 }
-            }
+            });
+            
+            // Calculate the difference
+            const allColors = new Set([...Object.keys(oldTapeUsage), ...Object.keys(newTapeUsage)]);
+            allColors.forEach(color => {
+                const oldQty = oldTapeUsage[color] || 0;
+                const newQty = newTapeUsage[color] || 0;
+                const diff = newQty - oldQty;
+                if (diff !== 0) {
+                    tapeChanges[color] = diff;
+                }
+            });
         }
 
         const order = await Order.findByPk(orderId, {
@@ -226,19 +230,26 @@ const updateStage2Assignment = async (req, res) => {
         const stage2Assignments = [];
         const today = new Date().toISOString().split('T')[0];
         
-        // Reduce tape inventory
-        const tapeUsageMap = {};
-        productAssignments.forEach(pa => {
-            if (pa.tapeColor && pa.tapeQuantity) {
-                const qty = parseFloat(pa.tapeQuantity) || 0;
-                if (qty > 0) {
-                    tapeUsageMap[pa.tapeColor] = (tapeUsageMap[pa.tapeColor] || 0) + qty;
-                }
-            }
-        });
-        
+        // Update tape inventory based on changes
         const { Inventory } = require('../model/associations');
-        for (const [tapeColor, quantity] of Object.entries(tapeUsageMap)) {
+        const tapeUsageMap = isEdit ? tapeChanges : {};
+        
+        // For new entries, calculate tape usage
+        if (!isEdit) {
+            productAssignments.forEach(pa => {
+                if (pa.tapeColor && pa.tapeQuantity) {
+                    const qty = parseFloat(pa.tapeQuantity) || 0;
+                    if (qty > 0) {
+                        tapeUsageMap[pa.tapeColor] = (tapeUsageMap[pa.tapeColor] || 0) + qty;
+                    }
+                }
+            });
+        }
+        
+        // Apply tape inventory changes
+        for (const [tapeColor, quantityChange] of Object.entries(tapeUsageMap)) {
+            if (quantityChange === 0) continue;
+            
             const tape = await Inventory.findOne({
                 where: { category: 'Tape', color: tapeColor },
                 transaction
@@ -252,17 +263,16 @@ const updateStage2Assignment = async (req, res) => {
                 });
             }
             
-            if (parseFloat(tape.quantity) < quantity) {
+            const newQuantity = parseFloat(tape.quantity) - quantityChange;
+            if (newQuantity < 0) {
                 await transaction.rollback();
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient tape inventory for "${tapeColor}". Required: ${quantity}, Available: ${tape.quantity}`
+                    message: `Insufficient tape inventory for "${tapeColor}". Available: ${tape.quantity}, Required: ${quantityChange}`
                 });
             }
             
-            await tape.update({
-                quantity: parseFloat(tape.quantity) - quantity
-            }, { transaction });
+            await tape.update({ quantity: newQuantity }, { transaction });
         }
 
         const processedReuse = {};

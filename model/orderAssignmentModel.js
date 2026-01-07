@@ -21,6 +21,10 @@ const OrderAssignment = sequelize.define('OrderAssignment', {
             key: 'oid'
         }
     },
+    order_auto_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     
     // Stage 1: Product Collection
     stage1_status: {

@@ -43,7 +43,8 @@ const getOrderAssignment = async (req, res) => {
             }
             
             const newAssignment = await OrderAssignment.create({
-                order_id: orderId
+                order_id: orderId,
+                order_auto_id: order.order_id
             });
             
             return res.status(200).json({
@@ -85,7 +86,11 @@ const updateStage1Assignment = async (req, res) => {
 
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
         if (!assignment) {
-            assignment = await OrderAssignment.create({ order_id: orderId });
+            const order = await Order.findByPk(orderId);
+            assignment = await OrderAssignment.create({ 
+                order_id: orderId,
+                order_auto_id: order?.order_id
+            });
         }
         
         // Process product assignments with entity details
@@ -149,7 +154,11 @@ const updateStage2Assignment = async (req, res) => {
 
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId }, transaction });
         if (!assignment) {
-            assignment = await OrderAssignment.create({ order_id: orderId }, { transaction });
+            const order = await Order.findByPk(orderId, { transaction });
+            assignment = await OrderAssignment.create({ 
+                order_id: orderId,
+                order_auto_id: order?.order_id
+            }, { transaction });
         }
 
         const isEdit = assignment.stage2_status === 'completed';
@@ -466,8 +475,10 @@ const updateStage3Assignment = async (req, res) => {
         });
         
         if (!assignment) {
+            const order = await Order.findByPk(orderId);
             assignment = await OrderAssignment.create({
-                order_id: orderId
+                order_id: orderId,
+                order_auto_id: order?.order_id
             });
         }
         
@@ -611,8 +622,10 @@ const saveItemAssignmentUpdate = async (req, res) => {
         });
         
         if (!assignment) {
+            const order = await Order.findByPk(orderId);
             assignment = await OrderAssignment.create({
                 order_id: orderId,
+                order_auto_id: order?.order_id,
                 product_assignments: [assignmentData]
             });
         } else {

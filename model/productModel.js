@@ -11,6 +11,14 @@ const Product = sequelize.define('Product', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    product_short: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    net_weight: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     product_image: {
         type: DataTypes.STRING,
         allowNull: true

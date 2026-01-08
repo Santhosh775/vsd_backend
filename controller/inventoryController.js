@@ -9,10 +9,10 @@ exports.createInventory = async (req, res) => {
         const newInventory = await Inventory.create({
             name,
             category,
-            weight: category === 'Tape' ? null : weight,
+            weight: category === 'Tape' ? null : (weight !== undefined && weight !== null ? weight : null),
             unit: category === 'Tape' ? null : unit,
             color: category === 'Tape' ? color : null,
-            quantity: quantity || 0
+            quantity: quantity !== undefined ? quantity : 0
         });
         
         res.status(201).json({
@@ -107,7 +107,7 @@ exports.updateInventory = async (req, res) => {
         await inventory.update({
             name,
             category,
-            weight: category === 'Tape' ? null : weight,
+            weight: category === 'Tape' ? null : (weight !== undefined && weight !== null ? weight : inventory.weight),
             unit: category === 'Tape' ? null : unit,
             color: category === 'Tape' ? color : null,
             quantity: quantity !== undefined ? quantity : inventory.quantity

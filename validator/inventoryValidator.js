@@ -24,7 +24,7 @@ exports.createInventoryValidation = [
     body("weight")
         .if(body('category').not().equals('Tape'))
         .notEmpty().withMessage("Weight/Quantity is required")
-        .isFloat({ min: 0.01 }).withMessage("Weight must be greater than 0"),
+        .isFloat({ min: 0 }).withMessage("Weight must be 0 or greater"),
 
     body("unit")
         .if(body('category').not().equals('Tape'))
@@ -50,7 +50,7 @@ exports.updateInventoryValidation = [
     body("weight")
         .if(body('category').exists().not().equals('Tape'))
         .optional()
-        .isFloat({ min: 0.01 }).withMessage("Weight must be greater than 0"),
+        .isFloat({ min: 0 }).withMessage("Weight must be 0 or greater"),
 
     body("unit")
         .if(body('category').exists().not().equals('Tape'))

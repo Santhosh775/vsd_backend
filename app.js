@@ -3,13 +3,19 @@ const app = express();
 const {connectDB, sequelize} = require('./config/db');
 const dotenv = require('dotenv');
 dotenv.config();
-const {globalLimiter} = require('./middleware/rateLimit');
 const cors = require('cors');
 // middlewares
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
-app.use(globalLimiter);
+
+
 
 app.use(cors(
     {
@@ -65,6 +71,7 @@ const vegetableAvailabilityRoute = require('./router/vegetableAvailabilityRoute'
 const preOrderRoute = require('./router/preOrderRoute');
 const sellStockRoute = require('./router/sellStockRoute');
 const localOrderRoute = require('./router/localOrderRoute');
+const customerRoute = require('./router/customerRoute');
 
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
@@ -98,6 +105,7 @@ app.use('/api/v1/vegetable-availability', vegetableAvailabilityRoute);
 app.use('/api/v1/preorders', preOrderRoute);
 app.use('/api/v1/sell-stock', sellStockRoute);
 app.use('/api/v1/local-order', localOrderRoute);
+app.use('/api/v1/customer', customerRoute);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

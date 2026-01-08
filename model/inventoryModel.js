@@ -16,7 +16,7 @@ const Inventory = sequelize.define('Inventory', {
         allowNull: false
     },
     weight: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.STRING,
         allowNull: true
     },
     unit: {

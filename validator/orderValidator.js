@@ -32,8 +32,8 @@ const createOrderValidation = [
 
     body('orderType')
         .optional({ nullable: true })
-        .isIn(['flight', 'local'])
-        .withMessage('Order type must be flight or local'),
+        .isIn(['flight', 'local', 'BOX ORDER', 'LOCAL GRADE ORDER'])
+        .withMessage('Order type must be flight, local, BOX ORDER, or LOCAL GRADE ORDER'),
 
     body('detailsComment')
         .optional({ nullable: true })
@@ -117,8 +117,8 @@ const updateOrderValidation = [
 
     body('orderType')
         .optional({ nullable: true })
-        .isIn(['flight', 'local'])
-        .withMessage('Order type must be flight or local'),
+        .isIn(['flight', 'local', 'BOX ORDER', 'LOCAL GRADE ORDER'])
+        .withMessage('Order type must be flight, local, BOX ORDER, or LOCAL GRADE ORDER'),
 
     body('detailsComment')
         .optional({ nullable: true })

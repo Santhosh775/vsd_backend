@@ -9,11 +9,7 @@ const VegetableAvailability = sequelize.define('VegetableAvailability', {
   },
   farmer_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'farmers',
-      key: 'fid'
-    }
+    allowNull: false
   },
   farmer_name: {
     type: DataTypes.STRING(255),

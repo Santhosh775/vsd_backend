@@ -9,12 +9,14 @@ const createOrderValidation = [
         .withMessage('Customer name must be at least 2 characters long'),
 
     body('customerId')
-        .optional({ nullable: true })
-        .isString()
-        .withMessage('Customer ID must be a string'),
+        .notEmpty()
+        .withMessage('Customer ID is required')
+        .isInt({ min: 1 })
+        .withMessage('Customer ID must be a positive integer'),
 
     body('orderReceivedDate')
-        .optional({ nullable: true })
+        .notEmpty()
+        .withMessage('Order received date is required')
         .isISO8601()
         .withMessage('Please provide a valid date in YYYY-MM-DD format'),
 
@@ -86,17 +88,20 @@ const updateOrderValidation = [
         .withMessage('Order ID must be in format ORD-XXX'),
 
     body('customerName')
-        .optional({ nullable: true })
+        .notEmpty()
+        .withMessage('Customer name is required')
         .isLength({ min: 2 })
         .withMessage('Customer name must be at least 2 characters long'),
 
     body('customerId')
-        .optional({ nullable: true })
-        .isString()
-        .withMessage('Customer ID must be a string'),
+        .notEmpty()
+        .withMessage('Customer ID is required')
+        .isInt({ min: 1 })
+        .withMessage('Customer ID must be a positive integer'),
 
     body('orderReceivedDate')
-        .optional({ nullable: true })
+        .notEmpty()
+        .withMessage('Order received date is required')
         .isISO8601()
         .withMessage('Please provide a valid date in YYYY-MM-DD format'),
 

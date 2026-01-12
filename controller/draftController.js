@@ -1,6 +1,16 @@
 const { sequelize } = require('../config/db');
 const Draft = require('../model/draftModel');
 
+// Generate customer name with date format
+const generateCustomerNameWithDate = (customerName, orderReceivedDate) => {
+    if (!orderReceivedDate) return customerName;
+    const date = new Date(orderReceivedDate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${customerName}_${day}-${month}-${year}`;
+};
+
 // Helper function to transform draft for API response
 const transformDraft = (draft) => {
     const transformedDraft = draft.toJSON(); // Convert to plain object
@@ -14,6 +24,7 @@ const createDraft = async (req, res) => {
         const {
             customerName,
             customerId,
+            orderReceivedDate,
             phoneNumber,
             email,
             alternateContact,
@@ -24,9 +35,14 @@ const createDraft = async (req, res) => {
             products
         } = req.body;
 
+        // Generate customer name with date if orderReceivedDate is provided
+        const customerNameWithDate = orderReceivedDate 
+            ? generateCustomerNameWithDate(customerName, orderReceivedDate)
+            : customerName;
+
         // Create the draft object with only provided fields
         const draftData = {
-            customer_name: customerName,
+            customer_name: customerNameWithDate,
             phone_number: phoneNumber,
             email: email,
             alternate_contact: alternateContact,
@@ -141,6 +157,7 @@ const updateDraft = async (req, res) => {
         const {
             customerName,
             customerId,
+            orderReceivedDate,
             phoneNumber,
             email,
             alternateContact,
@@ -161,9 +178,14 @@ const updateDraft = async (req, res) => {
             });
         }
 
+        // Generate customer name with date if orderReceivedDate is provided
+        const customerNameWithDate = orderReceivedDate 
+            ? generateCustomerNameWithDate(customerName, orderReceivedDate)
+            : customerName;
+
         // Create the update object with only provided fields
         const updateData = {
-            customer_name: customerName,
+            customer_name: customerNameWithDate,
             phone_number: phoneNumber,
             email: email,
             alternate_contact: alternateContact,

@@ -3,14 +3,23 @@ const Inventory = require('../model/inventoryModel');
 const { sequelize } = require('../config/db');
 const { handleValidationErrors } = require('../validator/orderValidator');
 
-// Generate order_id from customer name and ordering date
-const generateOrderId = (customerName, orderingDate) => {
+// Generate order_id from customer name and order received date
+const generateOrderId = (customerName, orderReceivedDate) => {
     const name = customerName.replace(/\s+/g, '').toUpperCase();
-    const date = new Date(orderingDate);
+    const date = new Date(orderReceivedDate);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${name}_${day}-${month}-${year}`;
+};
+
+// Generate customer name with date format
+const generateCustomerNameWithDate = (customerName, orderReceivedDate) => {
+    const date = new Date(orderReceivedDate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${customerName}_${day}-${month}-${year}`;
 };
 
 // Helper function to transform order items according to the specification
@@ -128,20 +137,18 @@ const createOrder = async (req, res) => {
         } = req.body;
 
         const orderId = generateOrderId(customerName, orderReceivedDate);
+        const customerNameWithDate = generateCustomerNameWithDate(customerName, orderReceivedDate);
 
         const orderData = {
             order_id: orderId,
-            customer_name: customerName,
+            customer_name: customerNameWithDate,
+            customer_id: customerId,
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
             packing_day: packingDay,
             order_type: orderType === 'flight' ? 'BOX ORDER' : 'LOCAL GRADE ORDER',
             details_comment: detailsComment
         };
-
-        if (customerId !== undefined && customerId !== null) {
-            orderData.customer_id = customerId;
-        }
 
         const order = await Order.create(orderData, { transaction: t });
 
@@ -334,18 +341,17 @@ const updateOrder = async (req, res) => {
             });
         }
 
+        const customerNameWithDate = generateCustomerNameWithDate(customerName, orderReceivedDate);
+
         const updateData = {
-            customer_name: customerName,
+            customer_name: customerNameWithDate,
+            customer_id: customerId,
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
             packing_day: packingDay,
             order_type: orderType === 'flight' ? 'BOX ORDER' : 'LOCAL GRADE ORDER',
             details_comment: detailsComment
         };
-
-        if (customerId !== undefined && customerId !== null) {
-            updateData.customer_id = customerId;
-        }
 
         await order.update(updateData, { transaction: t });
 

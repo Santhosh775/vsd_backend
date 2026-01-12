@@ -2,17 +2,9 @@ const Customer = require('../model/customerModel');
 
 exports.createCustomer = async (req, res) => {
     try {
-        const { customer_id, customer_name } = req.body;
+        const { customer_name } = req.body;
         
-        const existingCustomer = await Customer.findOne({ where: { customer_id } });
-        if (existingCustomer) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Customer ID already exists" 
-            });
-        }
-        
-        const newCustomer = await Customer.create({ customer_id, customer_name });
+        const newCustomer = await Customer.create({ customer_name });
         
         res.status(201).json({
             success: true,
@@ -85,7 +77,7 @@ exports.getCustomerById = async (req, res) => {
 exports.updateCustomer = async (req, res) => {
     try {
         const { id } = req.params;
-        const { customer_id, customer_name } = req.body;
+        const { customer_name } = req.body;
         
         const customer = await Customer.findByPk(id);
         if (!customer) {
@@ -95,17 +87,7 @@ exports.updateCustomer = async (req, res) => {
             });
         }
         
-        if (customer_id && customer_id !== customer.customer_id) {
-            const existingCustomer = await Customer.findOne({ where: { customer_id } });
-            if (existingCustomer) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Customer ID already exists" 
-                });
-            }
-        }
-        
-        await customer.update({ customer_id, customer_name });
+        await customer.update({ customer_name });
         
         res.status(200).json({
             success: true,

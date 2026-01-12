@@ -19,6 +19,8 @@ const Supplier = require('./supplierModel');
 const ThirdParty = require('./thirdPartyModel');
 const Labour = require('./labourModel');
 const LocalOrder = require('./LocalOrder');
+const Customer = require('./customerModel');
+const CustomerProductPreference = require('./customerProductPreferenceModel');
 
 // Inventory-InventoryStock associations
 Inventory.hasMany(InventoryStock, {
@@ -187,6 +189,28 @@ Order.hasOne(LocalOrder, {
     as: 'localOrder'
 });
 
+// Customer-CustomerProductPreference associations
+Customer.hasMany(CustomerProductPreference, {
+    foreignKey: 'customer_id',
+    as: 'preferences'
+});
+
+CustomerProductPreference.belongsTo(Customer, {
+    foreignKey: 'customer_id',
+    as: 'customer'
+});
+
+// Product-CustomerProductPreference associations
+Product.hasMany(CustomerProductPreference, {
+    foreignKey: 'product_id',
+    as: 'customerPreferences'
+});
+
+CustomerProductPreference.belongsTo(Product, {
+    foreignKey: 'product_id',
+    as: 'product'
+});
+
 module.exports = {
     Inventory,
     InventoryCompany,
@@ -208,5 +232,7 @@ module.exports = {
     Supplier,
     ThirdParty,
     Labour,
-    LocalOrder
+    LocalOrder,
+    Customer,
+    CustomerProductPreference
 };

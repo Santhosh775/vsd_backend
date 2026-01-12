@@ -72,6 +72,7 @@ const preOrderRoute = require('./router/preOrderRoute');
 const sellStockRoute = require('./router/sellStockRoute');
 const localOrderRoute = require('./router/localOrderRoute');
 const customerRoute = require('./router/customerRoute');
+const customerProductPreferenceRoute = require('./router/customerProductPreferenceRoute');
 
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
@@ -106,6 +107,7 @@ app.use('/api/v1/preorders', preOrderRoute);
 app.use('/api/v1/sell-stock', sellStockRoute);
 app.use('/api/v1/local-order', localOrderRoute);
 app.use('/api/v1/customer', customerRoute);
+app.use('/api/v1/customer-product', customerProductPreferenceRoute);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

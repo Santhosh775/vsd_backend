@@ -24,6 +24,17 @@ exports.createPreference = async (req, res) => {
             return res.status(400).json({ success: false, message: "Preference already exists" });
         }
         
+        // If display_order is provided, increment existing orders >= display_order
+        if (display_order !== null && display_order !== undefined) {
+            await CustomerProductPreference.increment('display_order', {
+                by: 1,
+                where: {
+                    customer_id,
+                    display_order: { [require('sequelize').Op.gte]: display_order }
+                }
+            });
+        }
+        
         const newPreference = await CustomerProductPreference.create({ 
             customer_id, 
             product_id, 
@@ -72,6 +83,37 @@ exports.updatePreference = async (req, res) => {
             return res.status(404).json({ success: false, message: "Preference not found" });
         }
         
+        const oldDisplayOrder = preference.display_order;
+        
+        // If display_order is changing, adjust other orders
+        if (display_order !== undefined && display_order !== oldDisplayOrder) {
+            const { Op } = require('sequelize');
+            
+            if (oldDisplayOrder !== null) {
+                // Decrement orders that were after the old position
+                await CustomerProductPreference.decrement('display_order', {
+                    by: 1,
+                    where: {
+                        customer_id,
+                        display_order: { [Op.gt]: oldDisplayOrder },
+                        product_id: { [Op.ne]: product_id }
+                    }
+                });
+            }
+            
+            if (display_order !== null) {
+                // Increment orders at or after the new position
+                await CustomerProductPreference.increment('display_order', {
+                    by: 1,
+                    where: {
+                        customer_id,
+                        display_order: { [Op.gte]: display_order },
+                        product_id: { [Op.ne]: product_id }
+                    }
+                });
+            }
+        }
+        
         await preference.update({ 
             enabled: enabled !== undefined ? enabled : preference.enabled,
             display_order: display_order !== undefined ? display_order : preference.display_order
@@ -95,7 +137,20 @@ exports.deletePreference = async (req, res) => {
             return res.status(404).json({ success: false, message: "Preference not found" });
         }
         
+        const deletedDisplayOrder = preference.display_order;
+        
         await preference.destroy();
+        
+        // Decrement display_order for products after the deleted one
+        if (deletedDisplayOrder !== null) {
+            await CustomerProductPreference.decrement('display_order', {
+                by: 1,
+                where: {
+                    customer_id,
+                    display_order: { [require('sequelize').Op.gt]: deletedDisplayOrder }
+                }
+            });
+        }
         
         res.status(200).json({ success: true, message: "Preference deleted successfully" });
     } catch (error) {

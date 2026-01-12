@@ -3,23 +3,34 @@ const Inventory = require('../model/inventoryModel');
 const { sequelize } = require('../config/db');
 const { handleValidationErrors } = require('../validator/orderValidator');
 
-// Generate order_id from customer name and order received date
-const generateOrderId = (customerName, orderReceivedDate) => {
+// Generate order_id from customer name, order received date, and sequence number
+const generateOrderId = async (customerName, orderReceivedDate, transaction) => {
     const name = customerName.replace(/\s+/g, '').toUpperCase();
     const date = new Date(orderReceivedDate);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `${name}_${day}-${month}-${year}`;
-};
-
-// Generate customer name with date format
-const generateCustomerNameWithDate = (customerName, orderReceivedDate) => {
-    const date = new Date(orderReceivedDate);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${customerName}_${day}-${month}-${year}`;
+    const baseOrderId = `${name}_${day}-${month}-${year}`;
+    
+    // Find existing orders with the same base order_id pattern
+    const { Op } = require('sequelize');
+    const existingOrders = await Order.findAll({
+        where: {
+            order_id: {
+                [Op.like]: `${baseOrderId}%`
+            }
+        },
+        transaction
+    });
+    
+    // If no existing orders, return base order_id
+    if (existingOrders.length === 0) {
+        return baseOrderId;
+    }
+    
+    // Otherwise, append sequence number
+    const sequenceNumber = existingOrders.length + 1;
+    return `${baseOrderId}_${sequenceNumber}`;
 };
 
 // Helper function to transform order items according to the specification
@@ -136,12 +147,11 @@ const createOrder = async (req, res) => {
             products
         } = req.body;
 
-        const orderId = generateOrderId(customerName, orderReceivedDate);
-        const customerNameWithDate = generateCustomerNameWithDate(customerName, orderReceivedDate);
+        const orderId = await generateOrderId(customerName, orderReceivedDate, t);
 
         const orderData = {
             order_id: orderId,
-            customer_name: customerNameWithDate,
+            customer_name: customerName,
             customer_id: customerId,
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
@@ -341,10 +351,8 @@ const updateOrder = async (req, res) => {
             });
         }
 
-        const customerNameWithDate = generateCustomerNameWithDate(customerName, orderReceivedDate);
-
         const updateData = {
-            customer_name: customerNameWithDate,
+            customer_name: customerName,
             customer_id: customerId,
             order_received_date: orderReceivedDate,
             packing_date: packingDate,

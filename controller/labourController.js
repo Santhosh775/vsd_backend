@@ -1,5 +1,6 @@
 const Labour = require('../model/labourModel');
 const LabourExcessPay = require('../model/labourExcessPayModel');
+const LabourRate = require('../model/labourRateModel');
 const { Op } = require('sequelize');
 
 // Function to generate labour ID with sequential numbering
@@ -447,6 +448,42 @@ exports.deleteExcessPay = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error deleting excess pay record',
+            error: error.message
+        });
+    }
+};
+
+// Get labour amount by work type
+exports.getAmountByWorkType = async (req, res) => {
+    try {
+        const { work_type } = req.params;
+        
+        const labourRate = await LabourRate.findOne({
+            where: { 
+                labourType: work_type,
+                status: 'Active'
+            }
+        });
+        
+        if (!labourRate) {
+            return res.status(404).json({
+                success: false,
+                message: `No active rate found for work type: ${work_type}`
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Labour amount retrieved successfully',
+            data: {
+                work_type: labourRate.labourType,
+                amount: labourRate.amount
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving labour amount',
             error: error.message
         });
     }

@@ -85,4 +85,10 @@ router.delete('/excess-pay/:id',
     labourController.deleteExcessPay
 );
 
+// Get labour amount by work type
+router.get('/amount/:work_type',
+    authMiddleware,
+    labourController.getAmountByWorkType
+);
+
 module.exports = router;

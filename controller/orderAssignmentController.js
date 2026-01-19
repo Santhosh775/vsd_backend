@@ -162,44 +162,6 @@ const updateStage2Assignment = async (req, res) => {
         }
 
         const isEdit = assignment.stage2_status === 'completed';
-        
-        // Calculate tape changes for editing
-        let tapeChanges = {};
-        if (isEdit && assignment.stage2_data?.productAssignments) {
-            const oldTapeUsage = {};
-            const newTapeUsage = {};
-            
-            // Calculate old tape usage
-            assignment.stage2_data.productAssignments.forEach(pa => {
-                if (pa.tapeColor && pa.tapeQuantity) {
-                    const qty = parseFloat(pa.tapeQuantity) || 0;
-                    if (qty > 0) {
-                        oldTapeUsage[pa.tapeColor] = (oldTapeUsage[pa.tapeColor] || 0) + qty;
-                    }
-                }
-            });
-            
-            // Calculate new tape usage
-            productAssignments.forEach(pa => {
-                if (pa.tapeColor && pa.tapeQuantity) {
-                    const qty = parseFloat(pa.tapeQuantity) || 0;
-                    if (qty > 0) {
-                        newTapeUsage[pa.tapeColor] = (newTapeUsage[pa.tapeColor] || 0) + qty;
-                    }
-                }
-            });
-            
-            // Calculate the difference
-            const allColors = new Set([...Object.keys(oldTapeUsage), ...Object.keys(newTapeUsage)]);
-            allColors.forEach(color => {
-                const oldQty = oldTapeUsage[color] || 0;
-                const newQty = newTapeUsage[color] || 0;
-                const diff = newQty - oldQty;
-                if (diff !== 0) {
-                    tapeChanges[color] = diff;
-                }
-            });
-        }
 
         const order = await Order.findByPk(orderId, {
             include: [{ model: OrderItem, as: 'items' }],
@@ -238,51 +200,6 @@ const updateStage2Assignment = async (req, res) => {
 
         const stage2Assignments = [];
         const today = new Date().toISOString().split('T')[0];
-        
-        // Update tape inventory based on changes
-        const { Inventory } = require('../model/associations');
-        const tapeUsageMap = isEdit ? tapeChanges : {};
-        
-        // For new entries, calculate tape usage
-        if (!isEdit) {
-            productAssignments.forEach(pa => {
-                if (pa.tapeColor && pa.tapeQuantity) {
-                    const qty = parseFloat(pa.tapeQuantity) || 0;
-                    if (qty > 0) {
-                        tapeUsageMap[pa.tapeColor] = (tapeUsageMap[pa.tapeColor] || 0) + qty;
-                    }
-                }
-            });
-        }
-        
-        // Apply tape inventory changes
-        for (const [tapeColor, quantityChange] of Object.entries(tapeUsageMap)) {
-            if (quantityChange === 0) continue;
-            
-            const tape = await Inventory.findOne({
-                where: { category: 'Tape', color: tapeColor },
-                transaction
-            });
-            
-            if (!tape) {
-                await transaction.rollback();
-                return res.status(400).json({
-                    success: false,
-                    message: `Tape color "${tapeColor}" not found in inventory`
-                });
-            }
-            
-            const newQuantity = parseFloat(tape.quantity) - quantityChange;
-            if (newQuantity < 0) {
-                await transaction.rollback();
-                return res.status(400).json({
-                    success: false,
-                    message: `Insufficient tape inventory for "${tapeColor}". Available: ${tape.quantity}, Required: ${quantityChange}`
-                });
-            }
-            
-            await tape.update({ quantity: newQuantity }, { transaction });
-        }
 
         const processedReuse = {};
         for (const [oiid, group] of Object.entries(productGroups)) {
@@ -355,8 +272,6 @@ const updateStage2Assignment = async (req, res) => {
                 packedAmount,
                 remainingStock,
                 reuseFromStock: processedReuse[pa.id] || 0,
-                tapeColor: pa.tapeColor,
-                tapeQuantity: pa.tapeQuantity,
                 labourId: pa.labourId,
                 labourName: pa.labourName,
                 labourData: pa.labourData || {},
@@ -380,7 +295,6 @@ const updateStage2Assignment = async (req, res) => {
                         product: a.product,
                         entityType: a.entityType,
                         entityName: a.entityName,
-                        tapeColor: a.tapeColor,
                         pickedQuantity: a.pickedQuantity,
                         wastage: a.wastage,
                         reuse: a.reuse,
@@ -392,6 +306,7 @@ const updateStage2Assignment = async (req, res) => {
                         oiid: a.oiid
                     }))
                 })),
+                labourPrices: summaryData.labourPrices || [],
                 totalLabours: summaryData.totalLabours,
                 totalProducts: summaryData.totalProducts,
                 totalPicked: summaryData.totalPicked,
@@ -417,8 +332,6 @@ const updateStage2Assignment = async (req, res) => {
                         revisedPicked: revisedPicked,
                         packedAmount: parseFloat(pa.packedAmount) || 0,
                         reuse: parseFloat(pa.reuse) || 0,
-                        tapeColor: pa.tapeColor || '',
-                        tapeQuantity: pa.tapeQuantity || '',
                         labourId: pa.labourId || '',
                         labourName: pa.labourName || '',
                         labourData: pa.labourData || {},
@@ -459,9 +372,11 @@ const updateStage2Assignment = async (req, res) => {
 
 // Update order assignment (Stage 3)
 const updateStage3Assignment = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
         const { orderId } = req.params;
-        const { products, summaryData } = req.body;
+        // Accept airportTapeData from frontend so we can persist tape color/quantity per airport
+        const { products, summaryData, airportTapeData } = req.body;
         
         if (!products || !Array.isArray(products)) {
             return res.status(400).json({
@@ -471,19 +386,162 @@ const updateStage3Assignment = async (req, res) => {
         }
         
         let assignment = await OrderAssignment.findOne({
-            where: { order_id: orderId }
+            where: { order_id: orderId },
+            transaction
         });
         
         if (!assignment) {
-            const order = await Order.findByPk(orderId);
+            const order = await Order.findByPk(orderId, { transaction });
             assignment = await OrderAssignment.create({
                 order_id: orderId,
                 order_auto_id: order?.order_id
+            }, { transaction });
+        }
+        
+        const isEdit = assignment.stage3_status === 'completed';
+
+        // Ensure we always treat existing stage3_data as an object (it may be stored as JSON or string)
+        let existingStage3Data = {};
+        if (assignment.stage3_data) {
+            try {
+                existingStage3Data = typeof assignment.stage3_data === 'string'
+                    ? JSON.parse(assignment.stage3_data)
+                    : assignment.stage3_data;
+            } catch (e) {
+                console.error('Error parsing existing stage3_data:', e);
+                existingStage3Data = {};
+            }
+        }
+        
+        // Calculate tape changes for editing
+        let tapeChanges = {};
+        if (isEdit) {
+            const oldTapeUsage = {};
+            const newTapeUsage = {};
+
+            // Prefer airport-level tape data if present in existing stage3_data
+            if (existingStage3Data.airportTapeData) {
+                Object.values(existingStage3Data.airportTapeData).forEach(info => {
+                    if (!info || !info.tapeColor || !info.tapeQuantity) return;
+                    const qty = parseFloat(info.tapeQuantity) || 0;
+                    if (qty > 0) {
+                        oldTapeUsage[info.tapeColor] = (oldTapeUsage[info.tapeColor] || 0) + qty;
+                    }
+                });
+            } else if (existingStage3Data.products) {
+                // Backward compatibility: compute from products if airportTapeData was not stored
+                existingStage3Data.products.forEach(p => {
+                    if (p.tapeColor && p.tapeQuantity) {
+                        const qty = parseFloat(p.tapeQuantity) || 0;
+                        if (qty > 0) {
+                            oldTapeUsage[p.tapeColor] = (oldTapeUsage[p.tapeColor] || 0) + qty;
+                        }
+                    }
+                });
+            }
+
+            // New usage: prefer airportTapeData from request, fall back to products
+            if (airportTapeData) {
+                Object.values(airportTapeData).forEach(info => {
+                    if (!info || !info.tapeColor || !info.tapeQuantity) return;
+                    const qty = parseFloat(info.tapeQuantity) || 0;
+                    if (qty > 0) {
+                        newTapeUsage[info.tapeColor] = (newTapeUsage[info.tapeColor] || 0) + qty;
+                    }
+                });
+            } else {
+                products.forEach(p => {
+                    if (p.tapeColor && p.tapeQuantity) {
+                        const qty = parseFloat(p.tapeQuantity) || 0;
+                        if (qty > 0) {
+                            newTapeUsage[p.tapeColor] = (newTapeUsage[p.tapeColor] || 0) + qty;
+                        }
+                    }
+                });
+            }
+
+            const allColors = new Set([...Object.keys(oldTapeUsage), ...Object.keys(newTapeUsage)]);
+            allColors.forEach(color => {
+                const oldQty = oldTapeUsage[color] || 0;
+                const newQty = newTapeUsage[color] || 0;
+                const diff = newQty - oldQty;
+                if (diff !== 0) {
+                    tapeChanges[color] = diff;
+                }
             });
+        }
+        
+        // Update tape inventory
+        const { Inventory } = require('../model/associations');
+        const tapeUsageMap = isEdit ? tapeChanges : {};
+        
+        if (!isEdit) {
+            // For new assignments, compute tape usage from airportTapeData if provided,
+            // otherwise fall back to per-product tape info for backward compatibility.
+            if (airportTapeData) {
+                Object.values(airportTapeData).forEach(info => {
+                    if (!info || !info.tapeColor || !info.tapeQuantity) return;
+                    const qty = parseFloat(info.tapeQuantity) || 0;
+                    if (qty > 0) {
+                        tapeUsageMap[info.tapeColor] = (tapeUsageMap[info.tapeColor] || 0) + qty;
+                    }
+                });
+            } else {
+                products.forEach(p => {
+                    if (p.tapeColor && p.tapeQuantity) {
+                        const qty = parseFloat(p.tapeQuantity) || 0;
+                        if (qty > 0) {
+                            tapeUsageMap[p.tapeColor] = (tapeUsageMap[p.tapeColor] || 0) + qty;
+                        }
+                    }
+                });
+            }
+        }
+        
+        for (const [tapeColor, quantityChange] of Object.entries(tapeUsageMap)) {
+            if (quantityChange === 0) continue;
+            
+            const tape = await Inventory.findOne({
+                where: { category: 'Tape', color: tapeColor },
+                transaction
+            });
+            
+            if (!tape) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Tape color "${tapeColor}" not found in inventory`
+                });
+            }
+            
+            const newQuantity = parseFloat(tape.quantity) - quantityChange;
+            if (newQuantity < 0) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient tape inventory for "${tapeColor}". Available: ${tape.quantity}, Required: ${quantityChange}`
+                });
+            }
+            
+            await tape.update({ quantity: newQuantity }, { transaction });
         }
         
         let stage3Summary = null;
         if (summaryData) {
+            // Merge tape information into airportGroups so each airport group carries its tapeColor/tapeQuantity
+            let airportGroupsWithTape = summaryData.airportGroups || {};
+            if (summaryData.airportGroups && airportTapeData) {
+                airportGroupsWithTape = Object.fromEntries(
+                    Object.entries(summaryData.airportGroups).map(([code, group]) => {
+                        const airportName = group.airportName;
+                        const tapeInfo = airportName && airportTapeData[airportName]
+                            ? airportTapeData[airportName]
+                            : {};
+                        return [code, { ...group, ...tapeInfo }];
+                    })
+                );
+            }
+
             stage3Summary = {
                 assignment_id: assignment.assignment_id,
                 driverAssignments: summaryData.driverAssignments?.map(da => ({
@@ -499,13 +557,17 @@ const updateStage3Assignment = async (req, res) => {
                         labour: a.labour,
                         ct: a.ct,
                         noOfPkgs: a.noOfPkgs || 0,
+                        tapeColor: a.tapeColor || '',
+                        tapeQuantity: a.tapeQuantity || '',
                         airportName: a.airportName || '',
                         airportLocation: a.airportLocation || '',
                         status: a.status || 'pending',
                         oiid: a.oiid
                     }))
                 })),
-                airportGroups: summaryData.airportGroups || {},
+                // Persist airport-level tape info both inside each group and as a separate map
+                airportGroups: airportGroupsWithTape,
+                airportTapeData: airportTapeData || {},
                 totalProducts: summaryData.totalProducts || 0,
                 totalDrivers: summaryData.totalDrivers || 0,
                 totalPackages: summaryData.totalPackages || 0,
@@ -525,6 +587,8 @@ const updateStage3Assignment = async (req, res) => {
                     labour: p.labour || '-',
                     ct: p.ct || '',
                     noOfPkgs: p.noOfPkgs || '',
+                    tapeColor: p.tapeColor || '',
+                    tapeQuantity: p.tapeQuantity || '',
                     selectedDriver: p.selectedDriver || '',
                     airportName: p.airportName || '',
                     airportLocation: p.airportLocation || '',
@@ -533,11 +597,15 @@ const updateStage3Assignment = async (req, res) => {
                     vehicleCapacity: p.vehicleCapacity || '',
                     status: p.status || 'pending',
                     assignmentIndex: p.assignmentIndex || 0
-                }))
+                })),
+                // Also store the raw airportTapeData map for easier retrieval in frontend
+                airportTapeData: airportTapeData || {}
             },
             stage3_summary_data: stage3Summary,
             stage3_status: 'completed'
-        });
+        }, { transaction });
+        
+        await transaction.commit();
         
         res.status(200).json({
             success: true,
@@ -548,6 +616,7 @@ const updateStage3Assignment = async (req, res) => {
             }
         });
     } catch (error) {
+        await transaction.rollback();
         console.error('Error updating stage 3 assignment:', error);
         res.status(500).json({
             success: false,

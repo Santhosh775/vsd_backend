@@ -480,6 +480,12 @@ const deleteOrder = async (req, res) => {
             });
         }
 
+        // Delete related order assignments first
+        const { OrderAssignment } = require('../model/associations');
+        await OrderAssignment.destroy({
+            where: { order_id: id }
+        }, { transaction: t });
+
         await OrderItem.destroy({
             where: { order_id: id }
         }, { transaction: t });

@@ -136,6 +136,7 @@ exports.createDriver = async (req, res) => {
             req.body.is_active = req.body.status !== 'Inactive';
         }
         
+        
         const driver = await Driver.create(req.body);
         
         // Remove password from response

@@ -1,28 +1,19 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const Airport = sequelize.define('Airport', {
-    aid: {
+const DriverRate = sequelize.define('DriverRate', {
+    drid: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    code: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    },
-    city: {
-        type: DataTypes.STRING,
+    deliveryType: {
+        type: DataTypes.ENUM('LOCAL GRADE ORDER', 'BOX ORDER', 'Both Types'),
         allowNull: false
     },
     amount: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true
+        allowNull: false
     },
     status: {
         type: DataTypes.ENUM('Active', 'Inactive'),
@@ -30,10 +21,10 @@ const Airport = sequelize.define('Airport', {
         defaultValue: 'Active'
     }
 }, {
-    tableName: 'airports',
+    tableName: 'driverratemanagement',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
 });
 
-module.exports = Airport;
+module.exports = DriverRate;

@@ -11,16 +11,20 @@ const Category = require('./categoryModel');
 const Driver = require('./driverModel');
 const DriverAdvancePay = require('./advancePayModel');
 const DriverAttendanceHistory = require('./driverAttendanceModel');
-const DriverExcessKm = require('./excessKmModel');
-const DriverFuelExpenses = require('./excessKmModel');
+const DriverFuelExpenses = require('./fuelExpenseModel');
 const DriverRemarks = require('./remarkModel');
+const DriverRate = require('./driverRateModel');
 const Farmer = require('./farmerModel');
 const Supplier = require('./supplierModel');
 const ThirdParty = require('./thirdPartyModel');
 const Labour = require('./labourModel');
+const LabourAttendance = require('./labourAttendanceModel');
+const LabourRate = require('./labourRateModel');
+const LabourExcessPay = require('./labourExcessPayModel');
 const LocalOrder = require('./LocalOrder');
 const Customer = require('./customerModel');
 const CustomerProductPreference = require('./customerProductPreferenceModel');
+const PetrolBulk = require('./petrolBulkModel');
 
 // Inventory-InventoryStock associations
 Inventory.hasMany(InventoryStock, {
@@ -146,15 +150,6 @@ DriverAttendanceHistory.belongsTo(Driver, {
     as: 'driver'
 });
 
-Driver.hasMany(DriverExcessKm, {
-    foreignKey: 'driver_id',
-    as: 'excessKm'
-});
-
-DriverExcessKm.belongsTo(Driver, {
-    foreignKey: 'driver_id',
-    as: 'excessKmDriver'
-});
 
 Driver.hasMany(DriverFuelExpenses, {
     foreignKey: 'driver_id',
@@ -163,7 +158,18 @@ Driver.hasMany(DriverFuelExpenses, {
 
 DriverFuelExpenses.belongsTo(Driver, {
     foreignKey: 'driver_id',
-    as: 'fuelExpenseDriver'
+    as: 'driver'
+});
+
+// PetrolBulk-DriverFuelExpenses associations
+PetrolBulk.hasMany(DriverFuelExpenses, {
+    foreignKey: 'pbid',
+    as: 'fuelExpenses'
+});
+
+DriverFuelExpenses.belongsTo(PetrolBulk, {
+    foreignKey: 'pbid',
+    as: 'petrolBunk'
 });
 
 Driver.hasMany(DriverRemarks, {
@@ -174,6 +180,21 @@ Driver.hasMany(DriverRemarks, {
 DriverRemarks.belongsTo(Driver, {
     foreignKey: 'driver_id',
     as: 'remarkDriver'
+});
+
+// Driver-DriverRate associations (based on delivery_type)
+Driver.belongsTo(DriverRate, {
+    foreignKey: 'delivery_type',
+    targetKey: 'deliveryType',
+    constraints: false,
+    as: 'rateInfo'
+});
+
+DriverRate.hasMany(Driver, {
+    foreignKey: 'delivery_type',
+    sourceKey: 'deliveryType',
+    constraints: false,
+    as: 'drivers'
 });
 
 // LocalOrder associations
@@ -211,6 +232,47 @@ CustomerProductPreference.belongsTo(Product, {
     as: 'product'
 });
 
+// Labour-LabourAttendance associations
+Labour.hasMany(LabourAttendance, {
+    foreignKey: 'labour_id',
+    sourceKey: 'lid',
+    as: 'attendanceRecords'
+});
+
+LabourAttendance.belongsTo(Labour, {
+    foreignKey: 'labour_id',
+    targetKey: 'lid',
+    as: 'labour'
+});
+
+// Labour-LabourExcessPay associations
+Labour.hasMany(LabourExcessPay, {
+    foreignKey: 'labour_id',
+    sourceKey: 'lid',
+    as: 'excessPayments'
+});
+
+LabourExcessPay.belongsTo(Labour, {
+    foreignKey: 'labour_id',
+    targetKey: 'lid',
+    as: 'labour'
+});
+
+// Labour-LabourRate associations (based on work_type)
+Labour.belongsTo(LabourRate, {
+    foreignKey: 'work_type',
+    targetKey: 'labourType',
+    constraints: false,
+    as: 'rateInfo'
+});
+
+LabourRate.hasMany(Labour, {
+    foreignKey: 'work_type',
+    sourceKey: 'labourType',
+    constraints: false,
+    as: 'labours'
+});
+
 module.exports = {
     Inventory,
     InventoryCompany,
@@ -225,14 +287,18 @@ module.exports = {
     Driver,
     DriverAdvancePay,
     DriverAttendanceHistory,
-    DriverExcessKm,
     DriverFuelExpenses,
     DriverRemarks,
+    DriverRate,
     Farmer,
     Supplier,
     ThirdParty,
     Labour,
+    LabourAttendance,
+    LabourRate,
+    LabourExcessPay,
     LocalOrder,
     Customer,
-    CustomerProductPreference
+    CustomerProductPreference,
+    PetrolBulk
 };

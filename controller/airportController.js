@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 
 exports.createAirport = async (req, res) => {
     try {
-        const { name, code, city, status } = req.body;
+        const { name, code, city, amount, status } = req.body;
 
         const existingAirport = await Airport.findOne({ where: { code } });
         if (existingAirport) {
@@ -13,7 +13,7 @@ exports.createAirport = async (req, res) => {
             });
         }
 
-        const airport = await Airport.create({ name, code, city, status: status || 'Active' });
+        const airport = await Airport.create({ name, code, city, amount, status: status || 'Active' });
 
         res.status(201).json({
             success: true,
@@ -144,7 +144,9 @@ exports.searchAirports = async (req, res) => {
                 [Op.or]: [
                     { name: { [Op.like]: `%${query}%` } },
                     { code: { [Op.like]: `%${query}%` } },
-                    { city: { [Op.like]: `%${query}%` } }
+                    { city: { [Op.like]: `%${query}%` } },
+                    { amount: { [Op.like]: `%${query}%` } }
+
                 ]
             }
         });

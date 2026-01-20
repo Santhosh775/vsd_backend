@@ -32,6 +32,10 @@ const Inventory = sequelize.define('Inventory', {
         allowNull: true,
         defaultValue: 0
     },
+    price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
 }, {
     tableName: 'inventories',
     timestamps: true

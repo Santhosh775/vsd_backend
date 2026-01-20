@@ -54,10 +54,6 @@ const Labour = sequelize.define('Labour', {
         type: DataTypes.ENUM('Normal', 'Medium', 'Heavy'),
         allowNull: false
     },
-    daily_wage: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
-    },
     joining_date: {
         type: DataTypes.DATEONLY,
         allowNull: false

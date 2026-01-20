@@ -36,6 +36,10 @@ exports.createInventoryValidation = [
         .notEmpty().withMessage("Color is required for tape")
         .isLength({ min: 2, max: 50 }).withMessage("Color must be 2-50 characters"),
 
+    body("price")
+        .optional()
+        .isFloat({ min: 0 }).withMessage("Price must be 0 or greater"),
+
 ];
 
 exports.updateInventoryValidation = [
@@ -61,6 +65,10 @@ exports.updateInventoryValidation = [
         .if(body('category').equals('Tape'))
         .optional()
         .isLength({ min: 2, max: 50 }).withMessage("Color must be 2-50 characters"),
+
+    body("price")
+        .optional()
+        .isFloat({ min: 0 }).withMessage("Price must be 0 or greater"),
 
 ];
 

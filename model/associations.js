@@ -21,6 +21,7 @@ const Labour = require('./labourModel');
 const LabourAttendance = require('./labourAttendanceModel');
 const LabourRate = require('./labourRateModel');
 const LabourExcessPay = require('./labourExcessPayModel');
+const ExcessKM = require('./excessKmModel');
 const LocalOrder = require('./LocalOrder');
 const Customer = require('./customerModel');
 const CustomerProductPreference = require('./customerProductPreferenceModel');
@@ -161,6 +162,19 @@ DriverFuelExpenses.belongsTo(Driver, {
     as: 'driver'
 });
 
+// Driver-ExcessKM (Start/End KM) associations
+Driver.hasMany(ExcessKM, {
+    foreignKey: 'driver_id',
+    sourceKey: 'did',
+    as: 'excessKms'
+});
+
+ExcessKM.belongsTo(Driver, {
+    foreignKey: 'driver_id',
+    targetKey: 'did',
+    as: 'driver'
+});
+
 // PetrolBulk-DriverFuelExpenses associations
 PetrolBulk.hasMany(DriverFuelExpenses, {
     foreignKey: 'pbid',
@@ -297,6 +311,7 @@ module.exports = {
     LabourAttendance,
     LabourRate,
     LabourExcessPay,
+    ExcessKM,
     LocalOrder,
     Customer,
     CustomerProductPreference,

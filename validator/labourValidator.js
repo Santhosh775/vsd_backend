@@ -51,12 +51,6 @@ exports.validateLabour = [
         .isIn(['Normal', 'Medium', 'Heavy'])
         .withMessage('Work type must be Normal, Medium, or Heavy'),
 
-    body('daily_wage')
-        .notEmpty()
-        .withMessage('Daily wage is required')
-        .isFloat({ min: 0 })
-        .withMessage('Daily wage must be a positive number'),
-
     body('joining_date')
         .notEmpty()
         .withMessage('Joining date is required')
@@ -141,11 +135,6 @@ exports.validateLabourUpdate = [
         .optional()
         .isIn(['Normal', 'Medium', 'Heavy'])
         .withMessage('Work type must be Normal, Medium, or Heavy'),
-
-    body('daily_wage')
-        .optional()
-        .isFloat({ min: 0 })
-        .withMessage('Daily wage must be a positive number'),
 
     body('joining_date')
         .optional()

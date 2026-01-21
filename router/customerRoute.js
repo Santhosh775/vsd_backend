@@ -5,6 +5,7 @@ const { paginate } = require('../middleware/pagination');
 
 router.post('/customers', customerController.createCustomer);
 router.get('/customers', paginate, customerController.getAllCustomers);
+router.get('/customers/category/:category', customerController.getCustomersByCategory);
 router.get('/customers/:id', customerController.getCustomerById);
 router.put('/customers/:id', customerController.updateCustomer);
 router.delete('/customers/:id', customerController.deleteCustomer);

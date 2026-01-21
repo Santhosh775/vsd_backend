@@ -2,9 +2,9 @@ const Customer = require('../model/customerModel');
 
 exports.createCustomer = async (req, res) => {
     try {
-        const { customer_name } = req.body;
+        const { customer_name, customer_category } = req.body;
         
-        const newCustomer = await Customer.create({ customer_name });
+        const newCustomer = await Customer.create({ customer_name, customer_category });
         
         res.status(201).json({
             success: true,
@@ -74,10 +74,33 @@ exports.getCustomerById = async (req, res) => {
     }
 };
 
+// Get customers by category
+exports.getCustomersByCategory = async (req, res) => {
+    try {
+        const { category } = req.params;
+
+        const customers = await Customer.findAll({
+            where: { customer_category: category },
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.status(200).json({
+            success: true,
+            data: customers
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch customers by category",
+            error: error.message
+        });
+    }
+};
+
 exports.updateCustomer = async (req, res) => {
     try {
         const { id } = req.params;
-        const { customer_name } = req.body;
+        const { customer_name, customer_category } = req.body;
         
         const customer = await Customer.findByPk(id);
         if (!customer) {
@@ -87,7 +110,7 @@ exports.updateCustomer = async (req, res) => {
             });
         }
         
-        await customer.update({ customer_name });
+        await customer.update({ customer_name, customer_category });
         
         res.status(200).json({
             success: true,

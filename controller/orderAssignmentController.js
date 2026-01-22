@@ -27,7 +27,7 @@ const getOrderAssignment = async (req, res) => {
         });
         
         if (!assignment) {
-            // Create a new assignment if it doesn't exist
+            // Get order to check its type
             const order = await Order.findByPk(orderId, {
                 include: [{
                     model: OrderItem,
@@ -42,6 +42,16 @@ const getOrderAssignment = async (req, res) => {
                 });
             }
             
+            // Check if this is a local order - local orders should NOT use OrderAssignment
+            const orderType = order.order_type?.toLowerCase();
+            if (orderType === 'local' || orderType === 'local grade order') {
+                return res.status(404).json({
+                    success: false,
+                    message: 'This is a local order. Please use the local order assignment endpoint instead.'
+                });
+            }
+            
+            // Only create OrderAssignment for flight/box orders
             const newAssignment = await OrderAssignment.create({
                 order_id: orderId,
                 order_auto_id: order.order_id
@@ -84,9 +94,25 @@ const updateStage1Assignment = async (req, res) => {
         const { orderId } = req.params;
         const { orderType, productAssignments, deliveryRoutes, summaryData } = req.body;
 
+        // Check if this is a local order - local orders should NOT use OrderAssignment
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        
+        const orderTypeFromDB = order.order_type?.toLowerCase();
+        if (orderTypeFromDB === 'local' || orderTypeFromDB === 'local grade order') {
+            return res.status(400).json({
+                success: false,
+                message: 'This is a local order. Please use the local order assignment endpoint instead.'
+            });
+        }
+
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
         if (!assignment) {
-            const order = await Order.findByPk(orderId);
             assignment = await OrderAssignment.create({ 
                 order_id: orderId,
                 order_auto_id: order?.order_id
@@ -124,13 +150,38 @@ const updateStage1Assignment = async (req, res) => {
             isRemaining: route.isRemaining || false
         }));
 
+        // Determine stage1_status based on assignment completion
+        let stage1Status = 'pending'; // Default status
+        
+        if (summaryData && summaryData.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
+            // Collect all assignments from all driver groups
+            const allAssignments = [];
+            summaryData.driverAssignments.forEach(driverGroup => {
+                if (driverGroup.assignments && Array.isArray(driverGroup.assignments)) {
+                    allAssignments.push(...driverGroup.assignments);
+                }
+            });
+            
+            // Check if all assignments have status "Completed"
+            if (allAssignments.length > 0) {
+                const allCompleted = allAssignments.every(assignment => {
+                    const status = assignment.status || '';
+                    return status.toLowerCase() === 'completed';
+                });
+                
+                if (allCompleted) {
+                    stage1Status = 'completed';
+                }
+            }
+        }
+
         // Update assignment
         await assignment.update({
             order_type: orderType,
             product_assignments: processedAssignments,
             delivery_routes: processedRoutes,
             stage1_summary_data: summaryData,
-            stage1_status: 'completed'
+            stage1_status: stage1Status
         });
         
         res.status(200).json({ success: true, message: 'Stage 1 saved successfully', data: assignment });
@@ -152,9 +203,30 @@ const updateStage2Assignment = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Product assignments are required' });
         }
 
+        // Check if this is a local order - local orders should NOT use OrderAssignment
+        const order = await Order.findByPk(orderId, {
+            include: [{ model: OrderItem, as: 'items' }],
+            transaction
+        });
+        if (!order) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        
+        const orderTypeFromDB = order.order_type?.toLowerCase();
+        if (orderTypeFromDB === 'local' || orderTypeFromDB === 'local grade order') {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'This is a local order. Please use the local order assignment endpoint instead.'
+            });
+        }
+
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId }, transaction });
         if (!assignment) {
-            const order = await Order.findByPk(orderId, { transaction });
             assignment = await OrderAssignment.create({ 
                 order_id: orderId,
                 order_auto_id: order?.order_id
@@ -162,11 +234,6 @@ const updateStage2Assignment = async (req, res) => {
         }
 
         const isEdit = assignment.stage2_status === 'completed';
-
-        const order = await Order.findByPk(orderId, {
-            include: [{ model: OrderItem, as: 'items' }],
-            transaction
-        });
 
         const productGroups = {};
         productAssignments.forEach(pa => {
@@ -316,6 +383,31 @@ const updateStage2Assignment = async (req, res) => {
             };
         }
 
+        // Determine stage2_status based on assignment completion
+        let stage2Status = 'pending'; // Default status
+        
+        if (summaryData && summaryData.labourAssignments && Array.isArray(summaryData.labourAssignments)) {
+            // Collect all assignments from all labour groups
+            const allAssignments = [];
+            summaryData.labourAssignments.forEach(labourGroup => {
+                if (labourGroup.assignments && Array.isArray(labourGroup.assignments)) {
+                    allAssignments.push(...labourGroup.assignments);
+                }
+            });
+            
+            // Check if all assignments have status "Completed"
+            if (allAssignments.length > 0) {
+                const allCompleted = allAssignments.every(assignment => {
+                    const status = assignment.status || '';
+                    return status.toLowerCase() === 'completed';
+                });
+                
+                if (allCompleted) {
+                    stage2Status = 'completed';
+                }
+            }
+        }
+
         await assignment.update({
             stage2_data: {
                 productAssignments: productAssignments.map(pa => {
@@ -344,7 +436,7 @@ const updateStage2Assignment = async (req, res) => {
                 completedAt: new Date()
             },
             stage2_summary_data: stage2Summary,
-            stage2_status: 'completed'
+            stage2_status: stage2Status
         }, { transaction });
 
         await transaction.commit();
@@ -385,13 +477,31 @@ const updateStage3Assignment = async (req, res) => {
             });
         }
         
+        // Check if this is a local order - local orders should NOT use OrderAssignment
+        const order = await Order.findByPk(orderId, { transaction });
+        if (!order) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        
+        const orderTypeFromDB = order.order_type?.toLowerCase();
+        if (orderTypeFromDB === 'local' || orderTypeFromDB === 'local grade order') {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'This is a local order. Please use the local order assignment endpoint instead.'
+            });
+        }
+
         let assignment = await OrderAssignment.findOne({
             where: { order_id: orderId },
             transaction
         });
         
         if (!assignment) {
-            const order = await Order.findByPk(orderId, { transaction });
             assignment = await OrderAssignment.create({
                 order_id: orderId,
                 order_auto_id: order?.order_id
@@ -589,6 +699,31 @@ const updateStage3Assignment = async (req, res) => {
                 savedAt: new Date().toISOString()
             };
         }
+
+        // Determine stage3_status based on assignment completion
+        let stage3Status = 'in_progress'; // Default status
+        
+        if (summaryData && summaryData.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
+            // Collect all assignments from all driver groups
+            const allAssignments = [];
+            summaryData.driverAssignments.forEach(driverGroup => {
+                if (driverGroup.assignments && Array.isArray(driverGroup.assignments)) {
+                    allAssignments.push(...driverGroup.assignments);
+                }
+            });
+            
+            // Check if all assignments have status "Completed"
+            if (allAssignments.length > 0) {
+                const allCompleted = allAssignments.every(assignment => {
+                    const status = assignment.status || '';
+                    return status.toLowerCase() === 'completed';
+                });
+                
+                if (allCompleted) {
+                    stage3Status = 'completed';
+                }
+            }
+        }
         
         await assignment.update({
             stage3_data: {
@@ -618,7 +753,7 @@ const updateStage3Assignment = async (req, res) => {
                 airportTapeData: airportTapeData || {}
             },
             stage3_summary_data: stage3Summary,
-            stage3_status: 'completed'
+            stage3_status: stage3Status
         }, { transaction });
         
         await transaction.commit();
@@ -701,13 +836,29 @@ const saveItemAssignmentUpdate = async (req, res) => {
         const { orderId, oiid } = req.params;
         const assignmentData = req.body;
         
+        // Check if this is a local order - local orders should NOT use OrderAssignment
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        
+        const orderTypeFromDB = order.order_type?.toLowerCase();
+        if (orderTypeFromDB === 'local' || orderTypeFromDB === 'local grade order') {
+            return res.status(400).json({
+                success: false,
+                message: 'This is a local order. Please use the local order assignment endpoint instead.'
+            });
+        }
+
         // Find or create assignment
         let assignment = await OrderAssignment.findOne({
             where: { order_id: orderId }
         });
         
         if (!assignment) {
-            const order = await Order.findByPk(orderId);
             assignment = await OrderAssignment.create({
                 order_id: orderId,
                 order_auto_id: order?.order_id,

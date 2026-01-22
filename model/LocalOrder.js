@@ -19,10 +19,6 @@ const LocalOrder = sequelize.define('LocalOrder', {
         type: DataTypes.STRING(50),
         defaultValue: 'Local Grade'
     },
-    collection_type: {
-        type: DataTypes.STRING(20),
-        allowNull: false
-    },
     product_assignments: {
         type: DataTypes.JSON,
         allowNull: true

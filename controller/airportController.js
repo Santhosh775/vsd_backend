@@ -13,7 +13,7 @@ exports.createAirport = async (req, res) => {
             });
         }
 
-        const airport = await Airport.create({ name, code, city, amount, status: status || 'Active' });
+        const airport = await Airport.create({ name, code, city, status: status || 'Active' });
 
         res.status(201).json({
             success: true,
@@ -145,7 +145,6 @@ exports.searchAirports = async (req, res) => {
                     { name: { [Op.like]: `%${query}%` } },
                     { code: { [Op.like]: `%${query}%` } },
                     { city: { [Op.like]: `%${query}%` } },
-                    { amount: { [Op.like]: `%${query}%` } }
 
                 ]
             }

@@ -26,6 +26,8 @@ const LocalOrder = require('./LocalOrder');
 const Customer = require('./customerModel');
 const CustomerProductPreference = require('./customerProductPreferenceModel');
 const PetrolBulk = require('./petrolBulkModel');
+const Admin = require('./adminModel');
+const RolesPermission = require('./rolesPermissionModel');
 
 // Inventory-InventoryStock associations
 Inventory.hasMany(InventoryStock, {
@@ -287,6 +289,19 @@ LabourRate.hasMany(Labour, {
     as: 'labours'
 });
 
+// Admin-RolesPermission associations
+Admin.hasOne(RolesPermission, {
+    foreignKey: 'aid',
+    sourceKey: 'aid',
+    as: 'permissions'
+});
+
+RolesPermission.belongsTo(Admin, {
+    foreignKey: 'aid',
+    targetKey: 'aid',
+    as: 'admin'
+});
+
 module.exports = {
     Inventory,
     InventoryCompany,
@@ -315,5 +330,7 @@ module.exports = {
     LocalOrder,
     Customer,
     CustomerProductPreference,
-    PetrolBulk
+    PetrolBulk,
+    Admin,
+    RolesPermission
 };

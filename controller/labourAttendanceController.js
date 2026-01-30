@@ -205,6 +205,114 @@ exports.markCheckOut = async (req, res) => {
     }
 };
 
+exports.updateCheckInTime = async (req, res) => {
+    try {
+        const { labour_id } = req.params;
+        const { date, time } = req.body;
+
+        const attendanceDate = date || new Date().toISOString().split('T')[0];
+        const checkInTime = time || new Date().toTimeString().split(' ')[0];
+
+        const labour = await Labour.findByPk(labour_id);
+        if (!labour) {
+            return res.status(404).json({
+                success: false,
+                message: 'Labour not found'
+            });
+        }
+
+        const attendance = await LabourAttendance.findOne({
+            where: {
+                labour_id: labour_id,
+                date: attendanceDate
+            }
+        });
+
+        if (!attendance) {
+            return res.status(404).json({
+                success: false,
+                message: 'No attendance record found for this date'
+            });
+        }
+
+        await attendance.update({
+            check_in_time: checkInTime,
+            status: 'Present'
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Check-in time updated successfully',
+            data: attendance
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error updating check-in time',
+            error: error.message
+        });
+    }
+};
+
+exports.updateCheckOutTime = async (req, res) => {
+    try {
+        const { labour_id } = req.params;
+        const { date, time } = req.body;
+
+        const attendanceDate = date || new Date().toISOString().split('T')[0];
+        const checkOutTime = time || new Date().toTimeString().split(' ')[0];
+
+        const labour = await Labour.findByPk(labour_id);
+        if (!labour) {
+            return res.status(404).json({
+                success: false,
+                message: 'Labour not found'
+            });
+        }
+
+        const attendance = await LabourAttendance.findOne({
+            where: {
+                labour_id: labour_id,
+                date: attendanceDate
+            }
+        });
+
+        if (!attendance) {
+            return res.status(404).json({
+                success: false,
+                message: 'No attendance record found for this date'
+            });
+        }
+
+        if (!attendance.check_in_time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Labour has not checked in yet'
+            });
+        }
+
+        const work_hours = calculateWorkHours(attendance.check_in_time, checkOutTime);
+
+        await attendance.update({
+            check_out_time: checkOutTime,
+            work_hours: work_hours,
+            status: 'Checked-Out'
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Check-out time updated successfully',
+            data: attendance
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error updating check-out time',
+            error: error.message
+        });
+    }
+};
+
 exports.markAbsent = async (req, res) => {
     try {
         const { labour_id } = req.params;

@@ -108,6 +108,16 @@ const RolesPermission = sequelize.define('RolesPermission', {
     payouts_thirdpartypayout: { type: DataTypes.BOOLEAN, defaultValue: false },
     payouts_driverpayout: { type: DataTypes.BOOLEAN, defaultValue: false },
     payouts_labourpayout: { type: DataTypes.BOOLEAN, defaultValue: false },
+
+    reports_enabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_orderreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_farmerreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_supplierreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_thirdpartyreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_driverreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_labourreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_payoutreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_invoicereports: { type: DataTypes.BOOLEAN, defaultValue: false },
     
     notification_enabled: { type: DataTypes.BOOLEAN, defaultValue: false },
     

@@ -18,6 +18,16 @@ router.post('/:labour_id/check-out',
     labourAttendanceController.markCheckOut
 );
 
+router.patch('/:labour_id/check-in',
+    authMiddleware,
+    labourAttendanceController.updateCheckInTime
+);
+
+router.patch('/:labour_id/check-out',
+    authMiddleware,
+    labourAttendanceController.updateCheckOutTime
+);
+
 router.post('/:labour_id/mark-absent', 
     authMiddleware,
     labourAttendanceController.markAbsent

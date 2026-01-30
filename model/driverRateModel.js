@@ -15,6 +15,10 @@ const DriverRate = sequelize.define('DriverRate', {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     },
+    kilometer: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
     status: {
         type: DataTypes.ENUM('Active', 'Inactive'),
         allowNull: false,

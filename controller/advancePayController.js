@@ -37,7 +37,7 @@ exports.getAllAdvancePays = async (req, res) => {
         const advancePays = await AdvancePay.findAll({
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'advancePayDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
@@ -63,7 +63,7 @@ exports.getAdvancePayById = async (req, res) => {
         const advancePay = await AdvancePay.findByPk(req.params.id, {
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'advancePayDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number', 'vehicle_number']
             }]
         });
@@ -93,10 +93,10 @@ exports.getAdvancePayById = async (req, res) => {
 exports.getAdvancePaysByDriverId = async (req, res) => {
     try {
         const advancePays = await AdvancePay.findAll({
-            where: { did: req.params.did },
+            where: { driver_id: req.params.driver_id },
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'advancePayDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
@@ -129,7 +129,7 @@ exports.getAdvancePaysByDateRange = async (req, res) => {
             },
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'advancePayDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]

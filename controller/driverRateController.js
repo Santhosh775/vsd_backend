@@ -18,9 +18,14 @@ const getAllDriverRates = async (req, res) => {
             order: [['created_at', 'DESC']]
         });
 
+        const data = rows.map(row => ({
+            ...row.toJSON(),
+            kilometers: row.kilometer
+        }));
+
         res.status(200).json({
             success: true,
-            data: rows,
+            data,
             pagination: {
                 currentPage: page,
                 totalPages: Math.ceil(count / limit),
@@ -49,9 +54,10 @@ const getDriverRateById = async (req, res) => {
             });
         }
 
+        const data = { ...driverRate.toJSON(), kilometers: driverRate.kilometer };
         res.status(200).json({
             success: true,
-            data: driverRate
+            data
         });
     } catch (error) {
         res.status(500).json({
@@ -65,17 +71,20 @@ const getDriverRateById = async (req, res) => {
 const createDriverRate = async (req, res) => {
     try {
         const { deliveryType, amount, status } = req.body;
+        const kilometerValue = req.body.kilometers !== undefined ? req.body.kilometers : req.body.kilometer;
 
         const driverRate = await DriverRate.create({
             deliveryType,
             amount,
+            kilometer: kilometerValue !== undefined && kilometerValue !== '' ? kilometerValue : null,
             status: status || 'Active'
         });
 
+        const data = { ...driverRate.toJSON(), kilometers: driverRate.kilometer };
         res.status(201).json({
             success: true,
             message: 'Driver rate created successfully',
-            data: driverRate
+            data
         });
     } catch (error) {
         res.status(500).json({
@@ -90,6 +99,7 @@ const updateDriverRate = async (req, res) => {
     try {
         const { id } = req.params;
         const { deliveryType, amount, status } = req.body;
+        const kilometerValue = req.body.kilometers !== undefined ? req.body.kilometers : req.body.kilometer;
 
         const driverRate = await DriverRate.findByPk(id);
         if (!driverRate) {
@@ -102,13 +112,15 @@ const updateDriverRate = async (req, res) => {
         await driverRate.update({
             deliveryType,
             amount,
+            kilometer: kilometerValue !== undefined && kilometerValue !== '' ? kilometerValue : null,
             status
         });
 
+        const data = { ...driverRate.toJSON(), kilometers: driverRate.kilometer };
         res.status(200).json({
             success: true,
             message: 'Driver rate updated successfully',
-            data: driverRate
+            data
         });
     } catch (error) {
         res.status(500).json({

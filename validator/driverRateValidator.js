@@ -9,6 +9,12 @@ const driverRateValidationRules = () => {
         body('amount')
             .notEmpty().withMessage('Amount is required')
             .isFloat({ min: 0 }).withMessage('Amount must be a positive number'),
+        body('kilometer')
+            .optional({ values: 'falsy' })
+            .isFloat({ min: 0 }).withMessage('Kilometer must be a positive number'),
+        body('kilometers')
+            .optional({ values: 'falsy' })
+            .isFloat({ min: 0 }).withMessage('Kilometers must be a positive number'),
         body('status')
             .optional()
             .isIn(['Active', 'Inactive']).withMessage('Status must be Active or Inactive')

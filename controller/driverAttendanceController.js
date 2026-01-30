@@ -221,6 +221,112 @@ exports.markCheckOut = async (req, res) => {
     }
 };
 
+// Update check-in time (for existing attendance)
+exports.updateCheckInTime = async (req, res) => {
+    try {
+        const { driver_id } = req.params;
+        const { date, time } = req.body;
+
+        const attendanceDate = date || new Date().toISOString().split('T')[0];
+        const checkInTime = time || new Date().toTimeString().split(' ')[0];
+
+        const driver = await Driver.findByPk(driver_id);
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: 'Driver not found'
+            });
+        }
+
+        const attendance = await AttendanceHistory.findOne({
+            where: {
+                driver_id: driver_id,
+                date: attendanceDate
+            }
+        });
+
+        if (!attendance) {
+            return res.status(404).json({
+                success: false,
+                message: 'No attendance record found for this date'
+            });
+        }
+
+        await attendance.update({
+            check_in_time: checkInTime,
+            attendance_status: 'Present'
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Check-in time updated successfully',
+            data: attendance
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error updating check-in time',
+            error: error.message
+        });
+    }
+};
+
+// Update check-out time (for existing attendance)
+exports.updateCheckOutTime = async (req, res) => {
+    try {
+        const { driver_id } = req.params;
+        const { date, time } = req.body;
+
+        const attendanceDate = date || new Date().toISOString().split('T')[0];
+        const checkOutTime = time || new Date().toTimeString().split(' ')[0];
+
+        const driver = await Driver.findByPk(driver_id);
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: 'Driver not found'
+            });
+        }
+
+        const attendance = await AttendanceHistory.findOne({
+            where: {
+                driver_id: driver_id,
+                date: attendanceDate
+            }
+        });
+
+        if (!attendance) {
+            return res.status(404).json({
+                success: false,
+                message: 'No attendance record found for this date'
+            });
+        }
+
+        if (!attendance.check_in_time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Driver has not checked in yet'
+            });
+        }
+
+        await attendance.update({
+            check_out_time: checkOutTime
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Check-out time updated successfully',
+            data: attendance
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: 'Error updating check-out time',
+            error: error.message
+        });
+    }
+};
+
 // Mark driver as present
 exports.markPresent = async (req, res) => {
     try {

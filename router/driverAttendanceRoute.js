@@ -30,6 +30,20 @@ router.post('/check-out/:driver_id',
     attendanceController.markCheckOut
 );
 
+// Update check-in time (for existing attendance)
+router.patch('/check-in/:driver_id',
+    authMiddleware,
+    validateCheckIn,
+    attendanceController.updateCheckInTime
+);
+
+// Update check-out time (for existing attendance)
+router.patch('/check-out/:driver_id',
+    authMiddleware,
+    validateCheckOut,
+    attendanceController.updateCheckOutTime
+);
+
 // Mark driver as present
 router.post('/mark-present/:driver_id', 
     authMiddleware,

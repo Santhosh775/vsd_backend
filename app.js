@@ -58,6 +58,7 @@ const fuelExpense = require('./router/fuelexpenseRoute');
 const remark = require('./router/remarkRoute');
 const orderRoute = require('./router/orderRoute');
 const orderAssignmentRoute = require('./router/orderAssignmentRoute');
+const flowerOrderRoute = require('./router/flowerOrderRoute');
 const draftRoute = require('./router/draftRoute');
 const inventoryRoute = require('./router/inventoryRoute');
 const inventoryCompanyRoute = require('./router/inventoryCompanyRoute');
@@ -75,10 +76,10 @@ const customerRoute = require('./router/customerRoute');
 const customerProductPreferenceRoute = require('./router/customerProductPreferenceRoute');
 const excessKmRoute = require('./router/excessKmRoute');
 const notificationRoute = require('./router/notificationRoute');
-
+const payoutRoute = require('./router/payoutRoute');
+const dailyPayoutsRoute = require('./router/dailyPayoutsRoute');
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
-// });
 app.use('/api/v1/admin', adminRoute);
 app.use('/api/v1/category', categoryRoute);
 app.use('/api/v1/product', productRoute);
@@ -95,6 +96,7 @@ app.use('/api/v1/fuel-expense', fuelExpense);
 app.use('/api/v1/remark', remark);
 app.use('/api/v1/order', orderRoute);
 app.use('/api/v1/order-assignment', orderAssignmentRoute);
+app.use('/api/v1/flower-order-assignment', flowerOrderRoute);
 app.use('/api/v1/draft', draftRoute);
 app.use('/api/v1/inventory', inventoryRoute);
 app.use('/api/v1/inventory-company', inventoryCompanyRoute);
@@ -112,6 +114,8 @@ app.use('/api/v1/customer', customerRoute);
 app.use('/api/v1/customer-product', customerProductPreferenceRoute);
 app.use('/api/v1/excess-km', excessKmRoute);
 app.use('/api/v1/notification', notificationRoute);
+app.use('/api/v1/payout', payoutRoute);
+app.use('/api/v1/daily-payouts', dailyPayoutsRoute);
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

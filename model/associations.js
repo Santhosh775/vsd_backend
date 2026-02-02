@@ -4,6 +4,7 @@ const InventoryStock = require('./inventoryStockModel');
 const Order = require('./orderModel');
 const OrderItem = require('./orderItemModel');
 const OrderAssignment = require('./orderAssignmentModel');
+const FlowerOrderAssignment = require('./flowerOrderModel');
 const Product = require('./productModel');
 const PreOrder = require('./preOrderModel');
 const Stock = require('./stockModel');
@@ -28,6 +29,8 @@ const CustomerProductPreference = require('./customerProductPreferenceModel');
 const PetrolBulk = require('./petrolBulkModel');
 const Admin = require('./adminModel');
 const RolesPermission = require('./rolesPermissionModel');
+const Payout = require('./payoutModel');
+const DailyPayout = require('./dailyPayoutsModel');
 
 // Inventory-InventoryStock associations
 Inventory.hasMany(InventoryStock, {
@@ -109,6 +112,19 @@ Order.hasOne(OrderAssignment, {
     foreignKey: 'order_id',
     sourceKey: 'order_id',
     as: 'assignment'
+});
+
+// FlowerOrderAssignment associations (for FLOWER ORDER type only)
+FlowerOrderAssignment.belongsTo(Order, {
+    foreignKey: 'order_id',
+    targetKey: 'oid',
+    as: 'order'
+});
+
+Order.hasOne(FlowerOrderAssignment, {
+    foreignKey: 'order_id',
+    sourceKey: 'oid',
+    as: 'flowerAssignment'
 });
 
 OrderAssignment.belongsTo(Driver, {
@@ -309,6 +325,9 @@ module.exports = {
     Order,
     OrderItem,
     OrderAssignment,
+    FlowerOrderAssignment,
+    Payout,
+    DailyPayout,
     Product,
     PreOrder,
     Stock,

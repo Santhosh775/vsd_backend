@@ -1,23 +1,13 @@
 const { sequelize } = require('../config/db');
 const Draft = require('../model/draftModel');
 
-// Generate customer name with date format
-const generateCustomerNameWithDate = (customerName, orderReceivedDate) => {
-    if (!orderReceivedDate) return customerName;
-    const date = new Date(orderReceivedDate);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${customerName}_${day}-${month}-${year}`;
-};
-
 // Helper function to transform draft for API response
 const transformDraft = (draft) => {
     const transformedDraft = draft.toJSON(); // Convert to plain object
     return transformedDraft;
 };
 
-// Create a new draft
+// Create a new draft (NewOrder payload: customerName, customerId, orderReceivedDate, packingDate, packingDay, orderType, detailsComment, products)
 const createDraft = async (req, res) => {
     const t = await sequelize.transaction();
     try {
@@ -25,53 +15,30 @@ const createDraft = async (req, res) => {
             customerName,
             customerId,
             orderReceivedDate,
-            phoneNumber,
-            email,
-            alternateContact,
-            deliveryAddress,
-            neededByDate,
-            preferredTime,
-            priority,
+            packingDate,
+            packingDay,
+            orderType,
+            detailsComment,
             products
         } = req.body;
 
-        // Generate customer name with date if orderReceivedDate is provided
-        const customerNameWithDate = orderReceivedDate 
-            ? generateCustomerNameWithDate(customerName, orderReceivedDate)
-            : customerName;
-
-        // Create the draft object with only provided fields
         const draftData = {
-            customer_name: customerNameWithDate,
-            phone_number: phoneNumber,
-            email: email,
-            alternate_contact: alternateContact,
-            delivery_address: deliveryAddress,
-            needed_by_date: neededByDate,
-            preferred_time: preferredTime,
-            priority: priority,
+            customer_name: customerName || '',
+            order_received_date: orderReceivedDate || null,
+            packing_date: packingDate || null,
+            packing_day: packingDay || null,
+            order_type: orderType || null,
+            details_comment: detailsComment || null,
             draft_data: {
-                products: products
-            }
+                products: Array.isArray(products) ? products : []
+            },
+            total_amount: 0
         };
 
-        // Only add customerId if it's provided and not null/undefined in the request body
         if (customerId !== undefined && customerId !== null && customerId !== '') {
             draftData.customer_id = customerId;
         }
 
-        // Calculate total amount from products
-        let totalAmount = 0;
-        if (products && products.length > 0) {
-            totalAmount = products.reduce((sum, product) => {
-                const netWeight = parseFloat(product.netWeight) || 0;
-                const marketPrice = parseFloat(product.marketPrice) || 0;
-                return sum + (netWeight * marketPrice);
-            }, 0);
-        }
-        draftData.total_amount = totalAmount.toFixed(2);
-
-        // Create the draft
         const draft = await Draft.create(draftData, { transaction: t });
 
         await t.commit();
@@ -149,7 +116,7 @@ const getDraftById = async (req, res) => {
     }
 };
 
-// Update draft
+// Update draft (same payload as create: customerName, customerId, orderReceivedDate, packingDate, packingDay, orderType, detailsComment, products)
 const updateDraft = async (req, res) => {
     const t = await sequelize.transaction();
     try {
@@ -158,17 +125,13 @@ const updateDraft = async (req, res) => {
             customerName,
             customerId,
             orderReceivedDate,
-            phoneNumber,
-            email,
-            alternateContact,
-            deliveryAddress,
-            neededByDate,
-            preferredTime,
-            priority,
+            packingDate,
+            packingDay,
+            orderType,
+            detailsComment,
             products
         } = req.body;
 
-        // Find and update the draft
         const draft = await Draft.findByPk(id, { transaction: t });
         if (!draft) {
             await t.rollback();
@@ -178,41 +141,24 @@ const updateDraft = async (req, res) => {
             });
         }
 
-        // Generate customer name with date if orderReceivedDate is provided
-        const customerNameWithDate = orderReceivedDate 
-            ? generateCustomerNameWithDate(customerName, orderReceivedDate)
-            : customerName;
-
-        // Create the update object with only provided fields
         const updateData = {
-            customer_name: customerNameWithDate,
-            phone_number: phoneNumber,
-            email: email,
-            alternate_contact: alternateContact,
-            delivery_address: deliveryAddress,
-            needed_by_date: neededByDate,
-            preferred_time: preferredTime,
-            priority: priority,
+            customer_name: customerName != null ? customerName : draft.customer_name,
+            order_received_date: orderReceivedDate !== undefined ? (orderReceivedDate || null) : draft.order_received_date,
+            packing_date: packingDate !== undefined ? (packingDate || null) : draft.packing_date,
+            packing_day: packingDay !== undefined ? (packingDay || null) : draft.packing_day,
+            order_type: orderType !== undefined ? (orderType || null) : draft.order_type,
+            details_comment: detailsComment !== undefined ? (detailsComment || null) : draft.details_comment,
             draft_data: {
-                products: products
-            }
+                products: Array.isArray(products) ? products : (draft.draft_data?.products || [])
+            },
+            total_amount: 0
         };
 
-        // Only add customerId if it's provided and not null/undefined in the request body
         if (customerId !== undefined && customerId !== null && customerId !== '') {
             updateData.customer_id = customerId;
+        } else if (customerId === null || customerId === '') {
+            updateData.customer_id = null;
         }
-
-        // Calculate total amount from products
-        let totalAmount = 0;
-        if (products && products.length > 0) {
-            totalAmount = products.reduce((sum, product) => {
-                const netWeight = parseFloat(product.netWeight) || 0;
-                const marketPrice = parseFloat(product.marketPrice) || 0;
-                return sum + (netWeight * marketPrice);
-            }, 0);
-        }
-        updateData.total_amount = totalAmount.toFixed(2);
 
         await draft.update(updateData, { transaction: t });
 

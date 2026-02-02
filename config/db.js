@@ -25,7 +25,7 @@ async function createDBIfNotExists() {
 }
 }
 
-// Database connection setup
+// Database connection setup - rely on MySQL/server system time for timestamps
 const sequelize = new Sequelize(
     DB_NAME,
     DB_USER,
@@ -36,6 +36,8 @@ const sequelize = new Sequelize(
         dialect: 'mysql',
         logging: false,
         define: {
+            // Let each model decide if it wants timestamps.
+            // MySQL will use its own system time for any DEFAULT CURRENT_TIMESTAMP columns.
             timestamps: false
         },
         pool: {

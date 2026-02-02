@@ -32,7 +32,7 @@ const Order = sequelize.define('Order', {
         allowNull: true
     },
     order_type: {
-        type: DataTypes.ENUM('BOX ORDER', 'LOCAL GRADE ORDER'),
+        type: DataTypes.ENUM('BOX ORDER', 'LOCAL GRADE ORDER', 'FLOWER ORDER'),
         defaultValue: 'LOCAL GRADE ORDER'
     },
     details_comment: {

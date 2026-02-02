@@ -1,6 +1,5 @@
 const { OrderAssignment, Order, OrderItem, Farmer, Supplier, ThirdParty, Labour, Driver, Stock } = require('../model/associations');
 const { sequelize } = require('../config/db');
-
 // Get order assignment by order ID
 const getOrderAssignment = async (req, res) => {
     try {
@@ -48,6 +47,13 @@ const getOrderAssignment = async (req, res) => {
                 return res.status(404).json({
                     success: false,
                     message: 'This is a local order. Please use the local order assignment endpoint instead.'
+                });
+            }
+            // Flower orders use flower-order-assignment endpoint and flower_order_assignments table
+            if (orderType === 'flower order' || orderType === 'flower') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This is a flower order. Please use the flower order assignment endpoint: /api/v1/flower-order-assignment/:orderId'
                 });
             }
             
@@ -108,6 +114,12 @@ const updateStage1Assignment = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'This is a local order. Please use the local order assignment endpoint instead.'
+            });
+        }
+        if (orderTypeFromDB === 'flower order' || orderTypeFromDB === 'flower') {
+            return res.status(400).json({
+                success: false,
+                message: 'This is a flower order. Please use the flower order assignment endpoint: /api/v1/flower-order-assignment/:orderId'
             });
         }
 
@@ -224,16 +236,21 @@ const updateStage2Assignment = async (req, res) => {
                 message: 'This is a local order. Please use the local order assignment endpoint instead.'
             });
         }
+        if (orderTypeFromDB === 'flower order' || orderTypeFromDB === 'flower') {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'This is a flower order. Please use the flower order assignment endpoint: /api/v1/flower-order-assignment/:orderId'
+            });
+        }
 
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId }, transaction });
         if (!assignment) {
-            assignment = await OrderAssignment.create({ 
+            assignment = await OrderAssignment.create({
                 order_id: orderId,
                 order_auto_id: order?.order_id
             }, { transaction });
         }
-
-        const isEdit = assignment.stage2_status === 'completed';
 
         const productGroups = {};
         productAssignments.forEach(pa => {
@@ -268,20 +285,41 @@ const updateStage2Assignment = async (req, res) => {
         const stage2Assignments = [];
         const today = new Date().toISOString().split('T')[0];
 
+        // Previous reuse per product (from last save) - on edit only deduct/add the delta
+        let previousReuseByOiid = {};
+        if (assignment.stage2_data) {
+            try {
+                const prevStage2 = typeof assignment.stage2_data === 'string'
+                    ? JSON.parse(assignment.stage2_data)
+                    : assignment.stage2_data;
+                const prevAssignments = prevStage2?.productAssignments || [];
+                prevAssignments.forEach(pa => {
+                    const id = String(pa.id);
+                    const reuse = parseFloat(pa.reuse) || 0;
+                    previousReuseByOiid[id] = Math.max(previousReuseByOiid[id] || 0, reuse);
+                });
+            } catch (e) {
+                // ignore parse errors; treat as no previous data
+            }
+        }
+
         const processedReuse = {};
         for (const [oiid, group] of Object.entries(productGroups)) {
-            const reuseInput = group.reuse;
+            const newReuse = group.reuse;
+            const previousReuse = previousReuseByOiid[oiid] || 0;
+            const deltaReuse = newReuse - previousReuse;
             const productName = group.product;
             let reuseFromStock = 0;
 
-            if (reuseInput > 0) {
+            if (deltaReuse > 0) {
+                // Need more from stock: deduct only the increase (old stock first)
                 const stocks = await Stock.findAll({
                     where: { products: productName },
-                    order: [['date', 'DESC']],
+                    order: [[sequelize.literal('COALESCE(stock_creation_time, created_at)'), 'ASC']],
                     transaction
                 });
 
-                let reuseRemaining = reuseInput;
+                let reuseRemaining = deltaReuse;
                 for (const stock of stocks) {
                     if (reuseRemaining <= 0) break;
                     const stockQty = parseFloat(stock.quantity) || 0;
@@ -298,34 +336,66 @@ const updateStage2Assignment = async (req, res) => {
                         }
                     }
                 }
+            } else if (deltaReuse < 0) {
+                // Reuse reduced: return the difference to stock (new row, consumed last by FIFO)
+                const amountToReturn = Math.abs(deltaReuse);
+                if (amountToReturn > 0.001) {
+                    await Stock.create({
+                        order_id: orderId,
+                        date: today,
+                        type: 'Reuse',
+                        name: 'Stage2 Return',
+                        products: productName,
+                        quantity: parseFloat(amountToReturn.toFixed(2)),
+                        stock_creation_time: new Date()
+                    }, { transaction });
+                }
             }
             processedReuse[oiid] = reuseFromStock;
         }
 
-        if (isEdit) {
-            await Stock.destroy({
-                where: { order_id: orderId },
-                transaction
-            });
-        }
+        // Update in place: match existing stock rows for this order to current assignments; update quantity or create/delete only as needed (no blanket destroy so kg don't vanish).
+        const existingStocks = await Stock.findAll({
+            where: { order_id: orderId },
+            transaction
+        });
+        const usedStockIds = new Set();
 
         for (const pa of productAssignments) {
-            const pickedQty = parseFloat(pa.pickedQuantity) || 0;
+            // Use pickedWeight (kg) when pickedQuantity is 0/missing (e.g. box-based orders send weight separately)
+            const pickedQty = parseFloat(pa.pickedQuantity) || parseFloat(pa.pickedWeight) || 0;
             const wastage = parseFloat(pa.wastage) || 0;
             const revisedPicked = pickedQty - wastage;
             const packedAmount = parseFloat(pa.packedAmount) || 0;
             const productName = pa.product;
             const remainingStock = revisedPicked - packedAmount;
 
-            if (remainingStock > 0.01) {
-                await Stock.create({
-                    order_id: orderId,
-                    date: today,
-                    type: pa.entityType,
-                    name: pa.entityName,
-                    products: productName,
-                    quantity: parseFloat(remainingStock.toFixed(2))
-                }, { transaction });
+            const existing = existingStocks.find(
+                s => !usedStockIds.has(s.stock_id) && s.products === productName && s.type === pa.entityType && s.name === pa.entityName
+            );
+            if (existing) {
+                usedStockIds.add(existing.stock_id);
+                if (remainingStock > 0.01) {
+                    await existing.update({
+                        quantity: parseFloat(remainingStock.toFixed(2)),
+                        date: today,
+                        stock_creation_time: new Date()
+                    }, { transaction });
+                } else {
+                    await existing.destroy({ transaction });
+                }
+            } else {
+                if (remainingStock > 0.01) {
+                    await Stock.create({
+                        order_id: orderId,
+                        date: today,
+                        type: pa.entityType,
+                        name: pa.entityName,
+                        products: productName,
+                        quantity: parseFloat(remainingStock.toFixed(2)),
+                        stock_creation_time: new Date()
+                    }, { transaction });
+                }
             }
 
             stage2Assignments.push({
@@ -346,6 +416,13 @@ const updateStage2Assignment = async (req, res) => {
                 startTime: pa.startTime || '',
                 endTime: pa.endTime || ''
             });
+        }
+
+        // Remove existing stock rows for this order that no longer have a matching assignment
+        for (const s of existingStocks) {
+            if (!usedStockIds.has(s.stock_id)) {
+                await s.destroy({ transaction });
+            }
         }
 
         let stage2Summary = null;
@@ -411,7 +488,8 @@ const updateStage2Assignment = async (req, res) => {
         await assignment.update({
             stage2_data: {
                 productAssignments: productAssignments.map(pa => {
-                    const pickedQty = parseFloat(pa.pickedQuantity) || 0;
+                    // Use pickedWeight when pickedQuantity is 0/missing (box-based orders)
+                    const pickedQty = parseFloat(pa.pickedQuantity) || parseFloat(pa.pickedWeight) || 0;
                     const wastage = parseFloat(pa.wastage) || 0;
                     const revisedPicked = pickedQty - wastage;
                     return {
@@ -525,6 +603,13 @@ const updateStage3Assignment = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'This is a local order. Please use the local order assignment endpoint instead.'
+            });
+        }
+        if (orderTypeFromDB === 'flower order' || orderTypeFromDB === 'flower') {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'This is a flower order. Please use the flower order assignment endpoint: /api/v1/flower-order-assignment/:orderId'
             });
         }
 
@@ -790,6 +875,17 @@ const updateStage4Assignment = async (req, res) => {
             }
         }
         
+        const order = await Order.findByPk(orderId);
+        if (order) {
+            const orderTypeFromDB = order.order_type?.toLowerCase();
+            if (orderTypeFromDB === 'flower order' || orderTypeFromDB === 'flower') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This is a flower order. Please use the flower order assignment endpoint: /api/v1/flower-order-assignment/:orderId'
+                });
+            }
+        }
+
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
         
         if (!assignment) {

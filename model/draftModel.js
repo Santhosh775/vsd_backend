@@ -31,7 +31,28 @@ const Draft = sequelize.define('Draft', {
     },
     delivery_address: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
+    },
+    order_received_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    packing_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    packing_day: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    order_type: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'LOCAL GRADE ORDER | BOX ORDER | FLOWER ORDER'
+    },
+    details_comment: {
+        type: DataTypes.TEXT,
+        allowNull: true
     },
     needed_by_date: {
         type: DataTypes.DATEONLY,

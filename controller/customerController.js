@@ -1,8 +1,17 @@
 const Customer = require('../model/customerModel');
 
+const ALLOWED_CUSTOMER_CATEGORIES = ['LOCAL GRADE ORDER', 'BOX ORDER', 'FLOWER ORDER'];
+
 exports.createCustomer = async (req, res) => {
     try {
         const { customer_name, customer_category } = req.body;
+
+        if (customer_category && !ALLOWED_CUSTOMER_CATEGORIES.includes(customer_category)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Customer category must be one of: LOCAL GRADE ORDER, BOX ORDER, FLOWER ORDER'
+            });
+        }
         
         const newCustomer = await Customer.create({ customer_name, customer_category });
         
@@ -101,6 +110,13 @@ exports.updateCustomer = async (req, res) => {
     try {
         const { id } = req.params;
         const { customer_name, customer_category } = req.body;
+
+        if (customer_category !== undefined && customer_category !== null && customer_category !== '' && !ALLOWED_CUSTOMER_CATEGORIES.includes(customer_category)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Customer category must be one of: LOCAL GRADE ORDER, BOX ORDER, FLOWER ORDER'
+            });
+        }
         
         const customer = await Customer.findByPk(id);
         if (!customer) {

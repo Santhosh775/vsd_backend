@@ -60,6 +60,24 @@ const transformOrderItems = (items) => {
     });
 };
 
+// Products that use inner 5KG GREEN BAG (inventory id 10) along with their packing type
+const INNER_BAG_INVENTORY_ID = 10;
+const INNER_BAG_NAME = '5KG GREEN BAG';
+const INNER_BAG_RULES = [
+    { pids: [33, 34], packingType: '10KG BOX', bagsPerBox: 2 },           // garlic/ginger: 2 bags per 10KG BOX
+    { pids: [52], packingType: '5KG BOX', bagsPerBox: 1 },                // groundnut: 1 bag per 5KG BOX
+    { pids: [30, 31, 32], packingType: '10KG YELLOW BAG', bagsPerBox: 1 }, // small yam, big yam, seppai: 2 bags per 10KG YELLOW BAG
+    { pids: [29, 35, 37], packingType: '10KG YELLOW BAG', bagsPerBox: 2 }  // pid 29, 35, 37: 2x 5KG GREEN BAG per 10KG YELLOW BAG
+];
+
+// Normalize packing type for rule matching (trim, collapse spaces, uppercase, normalize "KG")
+const normalizePackingType = (packingType) => {
+    if (packingType == null || typeof packingType !== 'string') return '';
+    let s = String(packingType).replace(/\s+/g, ' ').trim().toUpperCase();
+    s = s.replace(/\s*KG\s*/gi, 'KG ');
+    return s.replace(/\s+/g, ' ').trim();
+};
+
 // Helper function to reduce inventory based on order items
 const reduceInventory = async (orderItems, transaction) => {
     for (const item of orderItems) {
@@ -82,6 +100,31 @@ const reduceInventory = async (orderItems, transaction) => {
                     }, { transaction });
                 } else {
                     throw new Error(`Insufficient ${item.packing_type} inventory. Required: ${numBoxes}, Available: ${inventoryItem ? inventoryItem.quantity : 0}`);
+                }
+
+                // Reduce inner 5KG GREEN BAG (id 10) when product+packing matches rules
+                const packingNorm = normalizePackingType(item.packing_type);
+                const productIdNum = Number(item.product_id);
+                const rule = INNER_BAG_RULES.find(
+                    r => !Number.isNaN(productIdNum) && r.pids.includes(productIdNum) && r.packingType === packingNorm
+                );
+                if (rule) {
+                    const innerBagQty = rule.bagsPerBox * numBoxes;
+                    let innerBag = await Inventory.findByPk(INNER_BAG_INVENTORY_ID, { transaction });
+                    if (!innerBag) {
+                        innerBag = await Inventory.findOne({ where: { name: INNER_BAG_NAME }, transaction });
+                    }
+                    if (!innerBag) {
+                        throw new Error(`5KG GREEN BAG (inner packing) not found in inventory (id ${INNER_BAG_INVENTORY_ID} or name "${INNER_BAG_NAME}"). Cannot reduce for product ${item.product_id}.`);
+                    }
+                    const currentQty = parseFloat(innerBag.quantity) || 0;
+                    if (currentQty >= innerBagQty) {
+                        await innerBag.update({
+                            quantity: currentQty - innerBagQty
+                        }, { transaction });
+                    } else {
+                        throw new Error(`Insufficient 5KG GREEN BAG (inner packing) inventory. Required: ${innerBagQty}, Available: ${currentQty}`);
+                    }
                 }
             }
         }
@@ -109,12 +152,42 @@ const restoreInventory = async (orderItems, transaction) => {
                         quantity: parseFloat(inventoryItem.quantity) + numBoxes
                     }, { transaction });
                 }
+
+                // Restore inner 5KG GREEN BAG (id 10) when product+packing matches rules
+                const packingNorm = normalizePackingType(item.packing_type);
+                const productIdNum = Number(item.product_id);
+                const rule = INNER_BAG_RULES.find(
+                    r => !Number.isNaN(productIdNum) && r.pids.includes(productIdNum) && r.packingType === packingNorm
+                );
+                if (rule) {
+                    const innerBagQty = rule.bagsPerBox * numBoxes;
+                    let innerBag = await Inventory.findByPk(INNER_BAG_INVENTORY_ID, { transaction });
+                    if (!innerBag) {
+                        innerBag = await Inventory.findOne({ where: { name: INNER_BAG_NAME }, transaction });
+                    }
+                    if (innerBag) {
+                        const currentQty = parseFloat(innerBag.quantity) || 0;
+                        await innerBag.update({
+                            quantity: currentQty + innerBagQty
+                        }, { transaction });
+                    }
+                }
             }
         }
     }
 };
 
 
+
+// Map frontend orderType (flight/local/flower) or display name to DB order_type
+const getOrderTypeForDB = (orderType) => {
+    if (!orderType) return 'LOCAL GRADE ORDER';
+    if (orderType === 'flight') return 'BOX ORDER';
+    if (orderType === 'local') return 'LOCAL GRADE ORDER';
+    if (orderType === 'flower') return 'FLOWER ORDER';
+    if (['BOX ORDER', 'LOCAL GRADE ORDER', 'FLOWER ORDER'].includes(orderType)) return orderType;
+    return orderType;
+};
 
 // Helper function to transform orders according to the specification
 const transformOrder = (order) => {
@@ -156,7 +229,7 @@ const createOrder = async (req, res) => {
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
             packing_day: packingDay,
-            order_type: orderType === 'flight' ? 'BOX ORDER' : 'LOCAL GRADE ORDER',
+            order_type: getOrderTypeForDB(orderType),
             details_comment: detailsComment
         };
 
@@ -357,7 +430,7 @@ const updateOrder = async (req, res) => {
             order_received_date: orderReceivedDate,
             packing_date: packingDate,
             packing_day: packingDay,
-            order_type: orderType === 'flight' ? 'BOX ORDER' : 'LOCAL GRADE ORDER',
+            order_type: getOrderTypeForDB(orderType),
             details_comment: detailsComment
         };
 

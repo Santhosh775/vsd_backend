@@ -1,8 +1,6 @@
 const LocalOrder = require('../model/LocalOrder');
 const { Order, OrderItem, Stock } = require('../model/associations');
 const { sequelize } = require('../config/db');
-
-
 // Get local order by order ID
 const getLocalOrder = async (req, res) => {
     try {
@@ -156,70 +154,32 @@ const saveLocalOrder = async (req, res) => {
             // Only process stock entries if they don't already exist for this order
             if (existingStockForOrder.length === 0) {
                 const today = new Date().toISOString().split('T')[0];
-                
-                // Group assignments by product and entity to aggregate quantities
-                const stockMap = {};
-                
-                dataToUseForStock.driverAssignments.forEach(driverGroup => {
+
+                // Create one new Stock entry per completed assignment (do not merge with existing stock by product+entity)
+                for (const driverGroup of dataToUseForStock.driverAssignments) {
                     if (driverGroup.assignments && Array.isArray(driverGroup.assignments)) {
-                        driverGroup.assignments.forEach(assignment => {
-                            // Only process completed assignments
+                        for (const assignment of driverGroup.assignments) {
                             if (assignment.status && assignment.status.toLowerCase() === 'completed') {
                                 const productName = assignment.product || '';
                                 const entityType = assignment.entityType || '';
                                 const entityName = assignment.entityName || '';
                                 const quantity = parseFloat(assignment.quantity) || 0;
-                                
+
                                 if (productName && entityType && entityName && quantity > 0) {
-                                    const key = `${productName}-${entityType}-${entityName}`;
-                                    
-                                    if (!stockMap[key]) {
-                                        stockMap[key] = {
-                                            order_id: orderId,
-                                            date: today,
-                                            type: entityType,
-                                            name: entityName,
-                                            products: productName,
-                                            quantity: 0
-                                        };
-                                    }
-                                    
-                                    stockMap[key].quantity += quantity;
+                                    // Always create a new stock row; do not find or add to existing
+                                    await Stock.create({
+                                        order_id: orderId,
+                                        date: today,
+                                        type: entityType,
+                                        name: entityName,
+                                        products: productName,
+                                        quantity: parseFloat(quantity.toFixed(2)),
+                                        // Store system time from this Node server when stock was created
+                                        stock_creation_time: new Date()
+                                    }, { transaction });
                                 }
                             }
-                        });
-                    }
-                });
-                
-                // Create or update Stock entries for each unique product-entity combination
-                for (const stockEntry of Object.values(stockMap)) {
-                    // Check if stock entry exists for same product, type, and name (regardless of order_id)
-                    const existingStock = await Stock.findOne({
-                        where: {
-                            products: stockEntry.products,
-                            type: stockEntry.type,
-                            name: stockEntry.name
-                        },
-                        transaction
-                    });
-                    
-                    if (existingStock) {
-                        // Update existing stock entry by adding new quantity
-                        const newQuantity = parseFloat(existingStock.quantity) + parseFloat(stockEntry.quantity);
-                        await existingStock.update({
-                            quantity: parseFloat(newQuantity.toFixed(2)),
-                            date: today // Update date to today
-                        }, { transaction });
-                    } else {
-                        // Create new stock entry
-                        await Stock.create({
-                            order_id: stockEntry.order_id,
-                            date: stockEntry.date,
-                            type: stockEntry.type,
-                            name: stockEntry.name,
-                            products: stockEntry.products,
-                            quantity: parseFloat(stockEntry.quantity.toFixed(2))
-                        }, { transaction });
+                        }
                     }
                 }
             }

@@ -31,6 +31,11 @@ const Stock = sequelize.define('Stock', {
     quantity: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
+    },
+    stock_creation_time: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'System time when this stock row was created (local order, flower order, or OrderAssign stage2)'
     }
 }, {
     tableName: 'stock',

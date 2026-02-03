@@ -43,6 +43,18 @@ const Order = sequelize.define('Order', {
         type: DataTypes.ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'),
         defaultValue: 'pending'
     },
+    total_net_weight: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: true
+    },
+    total_no_of_boxes: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: true
+    },
+    total_gross_weight: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: true
+    },
 
 }, {
     tableName: 'orders',

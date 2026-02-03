@@ -217,6 +217,9 @@ const createOrder = async (req, res) => {
             packingDay,
             orderType,
             detailsComment,
+            totalNetWeight,
+            totalNumBoxes,
+            totalGrossWeight,
             products
         } = req.body;
 
@@ -230,7 +233,10 @@ const createOrder = async (req, res) => {
             packing_date: packingDate,
             packing_day: packingDay,
             order_type: getOrderTypeForDB(orderType),
-            details_comment: detailsComment
+            details_comment: detailsComment,
+            total_net_weight: totalNetWeight != null && totalNetWeight !== '' ? parseFloat(totalNetWeight) : null,
+            total_no_of_boxes: totalNumBoxes != null && totalNumBoxes !== '' ? parseFloat(totalNumBoxes) : null,
+            total_gross_weight: totalGrossWeight != null && totalGrossWeight !== '' ? parseFloat(totalGrossWeight) : null
         };
 
         const order = await Order.create(orderData, { transaction: t });
@@ -412,6 +418,9 @@ const updateOrder = async (req, res) => {
             packingDay,
             orderType,
             detailsComment,
+            totalNetWeight,
+            totalNumBoxes,
+            totalGrossWeight,
             products
         } = req.body;
 
@@ -431,7 +440,10 @@ const updateOrder = async (req, res) => {
             packing_date: packingDate,
             packing_day: packingDay,
             order_type: getOrderTypeForDB(orderType),
-            details_comment: detailsComment
+            details_comment: detailsComment,
+            total_net_weight: totalNetWeight != null && totalNetWeight !== '' ? parseFloat(totalNetWeight) : null,
+            total_no_of_boxes: totalNumBoxes != null && totalNumBoxes !== '' ? parseFloat(totalNumBoxes) : null,
+            total_gross_weight: totalGrossWeight != null && totalGrossWeight !== '' ? parseFloat(totalGrossWeight) : null
         };
 
         await order.update(updateData, { transaction: t });

@@ -30,6 +30,12 @@ const VegetableAvailability = sequelize.define('VegetableAvailability', {
   status: {
     type: DataTypes.ENUM('Available', 'Unavailable'),
     defaultValue: 'Available'
+  },
+  vegetable_history: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
+    comment: 'Array of { vegetable_name, from_date, to_date } for history of changes'
   }
 }, {
   tableName: 'vegetable_availability',

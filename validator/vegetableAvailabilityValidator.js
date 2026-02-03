@@ -1,5 +1,5 @@
 const validateVegetableAvailability = (req, res, next) => {
-  const { farmer_id, farmer_name, vegetable_name, from_date, to_date, status } = req.body;
+  const { farmer_id, farmer_name, vegetable_name, from_date, to_date, status, vegetable_history } = req.body;
 
   if (!farmer_id || !farmer_name || !vegetable_name || !from_date || !to_date) {
     return res.status(400).json({
@@ -20,6 +20,15 @@ const validateVegetableAvailability = (req, res, next) => {
       success: false,
       message: 'Invalid status value'
     });
+  }
+
+  if (vegetable_history !== undefined && vegetable_history !== null) {
+    if (!Array.isArray(vegetable_history)) {
+      return res.status(400).json({
+        success: false,
+        message: 'vegetable_history must be an array'
+      });
+    }
   }
 
   next();

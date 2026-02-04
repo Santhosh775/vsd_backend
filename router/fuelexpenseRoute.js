@@ -5,61 +5,51 @@ const {
     validateFuelExpense, 
     validateFuelExpenseUpdate 
 } = require('../validator/driverValidator');
-const { authMiddleware } = require('../middleware/authMiddleware');
 
-// Create a new fuel expense (Admin only)
+// Create a new fuel expense
 router.post('/create', 
-    authMiddleware, 
     validateFuelExpense,
     fuelExpenseController.createFuelExpense
 );
 
-// Get all fuel expenses (Admin only)
+// Get all fuel expenses
 router.get('/list', 
-    authMiddleware, 
     fuelExpenseController.getAllFuelExpenses
 );
 
-// Get fuel expense statistics (Admin only)
+// Get fuel expense statistics
 router.get('/stats', 
-    authMiddleware, 
     fuelExpenseController.getFuelExpenseStats
 );
 
-// Get fuel expenses by date range (Admin only)
+// Get fuel expenses by date range
 router.get('/date-range', 
-    authMiddleware, 
     fuelExpenseController.getFuelExpensesByDateRange
 );
 
-// Get fuel expenses by fuel type (Admin only)
+// Get fuel expenses by fuel type
 router.get('/fuel-type/:fuel_type', 
-    authMiddleware, 
     fuelExpenseController.getFuelExpensesByFuelType
 );
 
-// Get fuel expenses by driver ID (Admin only)
+// Get fuel expenses by driver ID
 router.get('/driver/:driver_id', 
-    authMiddleware, 
     fuelExpenseController.getFuelExpensesByDriverId
 );
 
-// Get fuel expense by ID (Admin only)
+// Get fuel expense by ID
 router.get('/:id', 
-    authMiddleware, 
     fuelExpenseController.getFuelExpenseById
 );
 
-// Update fuel expense by ID (Admin only)
+// Update fuel expense by ID
 router.put('/:id', 
-    authMiddleware, 
     validateFuelExpenseUpdate,
     fuelExpenseController.updateFuelExpense
 );
 
-// Delete fuel expense by ID (Admin only)
+// Delete fuel expense by ID
 router.delete('/:id', 
-    authMiddleware, 
     fuelExpenseController.deleteFuelExpense
 );
 

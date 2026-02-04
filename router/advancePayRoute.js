@@ -5,55 +5,46 @@ const {
     validateAdvancePay, 
     validateAdvancePayUpdate 
 } = require('../validator/driverValidator');
-const { authMiddleware } = require('../middleware/authMiddleware');
 
-// Create a new advance payment (Admin only)
+// Create a new advance payment
 router.post('/create', 
-    authMiddleware, 
     validateAdvancePay,
     advancePayController.createAdvancePay
 );
 
-// Get all advance payments (Admin only)
+// Get all advance payments
 router.get('/list', 
-    authMiddleware, 
     advancePayController.getAllAdvancePays
 );
 
-// Get advance payment statistics (Admin only)
+// Get advance payment statistics
 router.get('/stats', 
-    authMiddleware, 
     advancePayController.getAdvancePayStats
 );
 
-// Get advance payments by date range (Admin only)
+// Get advance payments by date range
 router.get('/date-range', 
-    authMiddleware, 
     advancePayController.getAdvancePaysByDateRange
 );
 
-// Get advance payments by driver ID (Admin only)
+// Get advance payments by driver ID
 router.get('/driver/:driver_id', 
-    authMiddleware, 
     advancePayController.getAdvancePaysByDriverId
 );
 
-// Get advance payment by ID (Admin only)
+// Get advance payment by ID
 router.get('/:id', 
-    authMiddleware, 
     advancePayController.getAdvancePayById
 );
 
-// Update advance payment by ID (Admin only)
+// Update advance payment by ID
 router.put('/:id', 
-    authMiddleware, 
     validateAdvancePayUpdate,
     advancePayController.updateAdvancePay
 );
 
-// Delete advance payment by ID (Admin only)
+// Delete advance payment by ID
 router.delete('/:id', 
-    authMiddleware, 
     advancePayController.deleteAdvancePay
 );
 

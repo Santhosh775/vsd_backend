@@ -9,57 +9,48 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 
 // Create a new remark (Admin only)
 router.post('/create', 
-    authMiddleware, 
     validateRemark,
     remarkController.createRemark
 );
 
 // Get all remarks (Admin only)
 router.get('/list', 
-    authMiddleware, 
     remarkController.getAllRemarks
 );
 
 // Search remarks (Admin only)
 router.get('/search/query', 
-    authMiddleware, 
     remarkController.searchRemarks
 );
 
 // Get remarks count by driver (Admin only)
-router.get('/count-by-driver', 
-    authMiddleware, 
+router.get('/count-by-driver',  
     remarkController.getRemarksCountByDriver
 );
 
 // Get remarks by date range (Admin only)
-router.get('/date-range', 
-    authMiddleware, 
+router.get('/date-range',  
     remarkController.getRemarksByDateRange
 );
 
 // Get remarks by driver ID (Admin only)
-router.get('/driver/:driver_id', 
-    authMiddleware, 
+router.get('/driver/:driver_id',  
     remarkController.getRemarksByDriverId
 );
 
 // Get remark by ID (Admin only)
-router.get('/:id', 
-    authMiddleware, 
+router.get('/:id',  
     remarkController.getRemarkById
 );
 
 // Update remark by ID (Admin only)
-router.put('/:id', 
-    authMiddleware, 
+router.put('/:id',  
     validateRemarkUpdate,
     remarkController.updateRemark
 );
 
 // Delete remark by ID (Admin only)
-router.delete('/:id', 
-    authMiddleware, 
+router.delete('/:id',  
     remarkController.deleteRemark
 );
 

@@ -305,7 +305,7 @@ router.post('/farmer/send-whatsapp', async (req, res) => {
 
     await client.messages.create({
       from: process.env.TWILIO_WHATSAPP_FROM,
-      to: `whatsapp:${phone.replace(/^whatsapp:/, '')}`,
+      to: farmer.phone, // use farmer's phone directly
       body: `Order ${orderId} details for ${farmer.farmer_name}`,
       mediaUrl: [pdfUrl]
     });
@@ -334,7 +334,7 @@ router.post('/supplier/send-whatsapp', async (req, res) => {
 
     await client.messages.create({
       from: process.env.TWILIO_WHATSAPP_FROM,
-      to: `whatsapp:${phone.replace(/^whatsapp:/, '')}`,
+      to: supplier.phone, // use supplier's phone directly
       body: `Order ${orderId} details for ${supplier.supplier_name}`,
       mediaUrl: [pdfUrl]
     });
@@ -363,7 +363,7 @@ router.post('/third-party/send-whatsapp', async (req, res) => {
 
     await client.messages.create({
       from: process.env.TWILIO_WHATSAPP_FROM,
-      to: `whatsapp:${phone.replace(/^whatsapp:/, '')}`,
+      to: thirdParty.phone, // use third party's phone directly
       body: `Order ${orderId} details for ${thirdParty.third_party_name}`,
       mediaUrl: [pdfUrl]
     });

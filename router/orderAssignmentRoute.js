@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     getOrderAssignment,
+    getOrdersByDriverId,
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,
@@ -13,6 +14,9 @@ const {
     getAvailableStockByProduct,
     getProductStock
 } = require('../controller/orderAssignmentController');
+
+// Get orders assigned to a driver (for driver app) – must be before /:orderId
+router.get('/driver/:driverId', getOrdersByDriverId);
 
 // Get order assignment by order ID
 router.get('/:orderId', getOrderAssignment);

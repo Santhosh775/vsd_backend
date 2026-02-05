@@ -1,5 +1,107 @@
 const { OrderAssignment, Order, OrderItem, Farmer, Supplier, ThirdParty, Labour, Driver, Stock } = require('../model/associations');
 const { sequelize } = require('../config/db');
+
+// Check if an assignment involves the given driver (by did or driver_id)
+const assignmentHasDriver = (assignment, driver) => {
+    const did = driver.did;
+    const driverIdStr = String(driver.driver_id || '');
+    const driverName = (driver.driver_name || '').trim();
+
+    if (assignment.airport_driver_id === did) return true;
+
+    const stage1 = assignment.stage1_summary_data;
+    if (stage1?.driverAssignments?.length) {
+        for (const da of stage1.driverAssignments) {
+            if (da.driverId === did || da.driverId === driverIdStr || String(da.driverId) === String(did)) return true;
+            if (driverName && (da.driver === driverName || da.driverName === driverName)) return true;
+        }
+    }
+
+    const routes = assignment.delivery_routes;
+    if (Array.isArray(routes)) {
+        for (const r of routes) {
+            if (r.driverId === did || r.driverId === driverIdStr || String(r.driverId) === String(did)) return true;
+            if (driverName && (r.driver === driverName || r.driverName === driverName)) return true;
+        }
+    }
+
+    const stage3 = assignment.stage3_summary_data;
+    if (stage3?.driverAssignments?.length) {
+        for (const da of stage3.driverAssignments) {
+            if (da.driverId === did || da.driverId === driverIdStr || String(da.driverId) === String(did)) return true;
+            if (driverName && (da.driver === driverName || da.driverName === driverName)) return true;
+        }
+    }
+
+    return false;
+};
+
+// Get orders assigned to a specific driver (for driver app)
+const getOrdersByDriverId = async (req, res) => {
+    try {
+        const { driverId } = req.params;
+        const driverByDid = Number(driverId);
+        const isNumeric = !Number.isNaN(driverByDid);
+
+        const driver = await Driver.findOne({
+            where: isNumeric
+                ? { did: driverByDid }
+                : { driver_id: driverId }
+        });
+
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: 'Driver not found'
+            });
+        }
+
+        const assignments = await OrderAssignment.findAll({
+            include: [
+                {
+                    model: Order,
+                    as: 'order',
+                    include: [{
+                        model: OrderItem,
+                        as: 'items',
+                        attributes: ['oiid', 'product_name', 'num_boxes', 'packing_type', 'net_weight', 'gross_weight']
+                    }]
+                },
+                {
+                    model: Driver,
+                    as: 'airportDriver',
+                    attributes: ['did', 'driver_id', 'driver_name']
+                }
+            ]
+        });
+
+        const driverPlain = driver.get({ plain: true });
+        const filtered = assignments.filter(a => assignmentHasDriver(a.get({ plain: true }), driverPlain));
+
+        const data = filtered.map(a => {
+            const raw = a.get({ plain: true });
+            const assignmentData = { ...raw };
+            if (assignmentData.stage2_data?.productAssignments) {
+                assignmentData.stage2_assignments = assignmentData.stage2_data.productAssignments;
+            }
+            return assignmentData;
+        });
+
+        res.status(200).json({
+            success: true,
+            data,
+            count: data.length
+        });
+    } catch (error) {
+        console.error('Error fetching orders by driver:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch orders for driver',
+            error: error.message
+        });
+    }
+};
+
 // Get order assignment by order ID
 const getOrderAssignment = async (req, res) => {
     try {
@@ -1197,6 +1299,7 @@ const getProductStock = async (req, res) => {
 
 module.exports = {
     getOrderAssignment,
+    getOrdersByDriverId,
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,

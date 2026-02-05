@@ -19,9 +19,12 @@
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.0",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7",
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "nodemon": "^3.1.11",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "twilio": "^5.12.0"
   }
 }

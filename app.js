@@ -78,6 +78,8 @@ const excessKmRoute = require('./router/excessKmRoute');
 const notificationRoute = require('./router/notificationRoute');
 const payoutRoute = require('./router/payoutRoute');
 const dailyPayoutsRoute = require('./router/dailyPayoutsRoute');
+
+
 // app.use('/api/v1', (req, res) => {
 //     res.send('API is working');
 app.use('/api/v1/admin', adminRoute);
@@ -116,6 +118,7 @@ app.use('/api/v1/excess-km', excessKmRoute);
 app.use('/api/v1/notification', notificationRoute);
 app.use('/api/v1/payout', payoutRoute);
 app.use('/api/v1/daily-payouts', dailyPayoutsRoute);
+
 
 // start server
 app.listen(process.env.SERVER_PORT, () => console.log(`🚀 Server running on port ${process.env.SERVER_PORT}`));

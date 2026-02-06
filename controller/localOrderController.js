@@ -1,6 +1,74 @@
 const LocalOrder = require('../model/LocalOrder');
-const { Order, OrderItem, Stock } = require('../model/associations');
+const { Order, OrderItem, Stock, Driver } = require('../model/associations');
 const { sequelize } = require('../config/db');
+
+// Check if driverId (did or driver_id) appears in summary_data.driverAssignments
+const driverIdInSummaryData = (summaryData, driverDid, driverIdStr) => {
+    if (!summaryData?.driverAssignments?.length) return false;
+    for (const da of summaryData.driverAssignments) {
+        const id = da.driverId;
+        if (id === driverDid || id === driverIdStr || String(id) === String(driverDid)) return true;
+    }
+    return false;
+};
+
+// Get orders for a particular driver from LocalOrder table (by stored driverId in summary_data)
+const getDriverLocalOrders = async (req, res) => {
+    try {
+        const { driverId } = req.params;
+        const driverByDid = Number(driverId);
+        const isNumeric = !Number.isNaN(driverByDid);
+
+        const driver = await Driver.findOne({
+            where: isNumeric ? { did: driverByDid } : { driver_id: driverId }
+        });
+
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: 'Driver not found'
+            });
+        }
+
+        const did = driver.did;
+        const driverIdStr = String(driver.driver_id || '');
+
+        const localOrders = await LocalOrder.findAll({
+            include: [{
+                model: Order,
+                as: 'order',
+                include: [{
+                    model: OrderItem,
+                    as: 'items',
+                    attributes: ['oiid', 'product_name', 'num_boxes', 'packing_type', 'net_weight', 'gross_weight']
+                }]
+            }],
+            order: [['created_at', 'DESC']]
+        });
+
+        const result = [];
+        for (const lo of localOrders) {
+            const plain = lo.get({ plain: true });
+            if (driverIdInSummaryData(plain.summary_data, did, driverIdStr)) {
+                result.push(plain);
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            data: result,
+            count: result.length
+        });
+    } catch (error) {
+        console.error('Error fetching driver local orders:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch driver local orders',
+            error: error.message
+        });
+    }
+};
+
 // Get local order by order ID
 const getLocalOrder = async (req, res) => {
     try {
@@ -55,8 +123,27 @@ const saveLocalOrder = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const { orderId } = req.params;
-        const { productAssignments, deliveryRoutes, summaryData } = req.body;
-        
+        const { productAssignments, deliveryRoutes, summaryData: summaryDataRaw } = req.body;
+        // Accept camelCase or snake_case from client
+        const summaryDataIn = summaryDataRaw ?? req.body.summary_data ?? null;
+
+        // Build summary_data with driverId explicitly stored per driver assignment (for local_orders.summary_data)
+        let summaryDataToStore = summaryDataIn;
+        if (summaryDataIn && summaryDataIn.driverAssignments && Array.isArray(summaryDataIn.driverAssignments)) {
+            summaryDataToStore = {
+                ...summaryDataIn,
+                driverAssignments: summaryDataIn.driverAssignments.map(driverGroup => {
+                    const rawId = driverGroup.driverId ?? driverGroup.driver_id;
+                    const driverId = rawId != null
+                        ? (typeof rawId === 'number' ? rawId : parseInt(rawId, 10))
+                        : null;
+                    return {
+                        ...driverGroup,
+                        driverId: Number.isNaN(driverId) ? null : driverId
+                    };
+                })
+            };
+        }
 
         let localOrder = await LocalOrder.findOne({ where: { order_id: orderId }, transaction });
         
@@ -136,10 +223,10 @@ const saveLocalOrder = async (req, res) => {
         }
         
         // If existing data is not all completed, check incoming summaryData
-        if (!allCompleted && summaryData) {
-            if (checkAllCompleted(summaryData)) {
+        if (!allCompleted && summaryDataToStore) {
+            if (checkAllCompleted(summaryDataToStore)) {
                 allCompleted = true;
-                dataToUseForStock = summaryData;
+                dataToUseForStock = summaryDataToStore;
             }
         }
 
@@ -186,14 +273,14 @@ const saveLocalOrder = async (req, res) => {
         }
 
         // Determine status based on incoming summaryData (what's being saved)
-        const incomingAllCompleted = summaryData ? checkAllCompleted(summaryData) : false;
+        const incomingAllCompleted = summaryDataToStore ? checkAllCompleted(summaryDataToStore) : false;
         const finalStatus = incomingAllCompleted ? 'completed' : 'in_progress';
 
         if (localOrder) {
             await localOrder.update({
                 product_assignments: processedAssignments,
                 delivery_routes: processedRoutes,
-                summary_data: summaryData,
+                summary_data: summaryDataToStore,
                 status: finalStatus
             }, { transaction });
         } else {
@@ -202,7 +289,7 @@ const saveLocalOrder = async (req, res) => {
                 order_type: 'LOCAL GRADE ORDER',
                 product_assignments: processedAssignments,
                 delivery_routes: processedRoutes,
-                summary_data: summaryData,
+                summary_data: summaryDataToStore,
                 status: finalStatus
             }, { transaction });
         }
@@ -256,5 +343,6 @@ const getAllLocalOrders = async (req, res) => {
 module.exports = {
     getLocalOrder,
     saveLocalOrder,
-    getAllLocalOrders
+    getAllLocalOrders,
+    getDriverLocalOrders
 };

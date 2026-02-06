@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     getOrderAssignment,
     getOrdersByDriverId,
+    getDriverOrdersFromStage1AndStage3,
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,
@@ -17,6 +18,9 @@ const {
 
 // Get orders assigned to a driver (for driver app) – must be before /:orderId
 router.get('/driver/:driverId', getOrdersByDriverId);
+
+// Get orders for a driver from stage1_summary_data and stage3_summary_data only (by stored driverId)
+router.get('/driver/:driverId/stage1-and-stage3', getDriverOrdersFromStage1AndStage3);
 
 // Get order assignment by order ID
 router.get('/:orderId', getOrderAssignment);

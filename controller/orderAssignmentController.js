@@ -102,6 +102,90 @@ const getOrdersByDriverId = async (req, res) => {
     }
 };
 
+// Check if driverId (did or driver_id) appears in stage summary driverAssignments
+const driverIdInStageSummary = (stageSummaryData, driverDid, driverIdStr) => {
+    if (!stageSummaryData?.driverAssignments?.length) return false;
+    for (const da of stageSummaryData.driverAssignments) {
+        const id = da.driverId;
+        if (id === driverDid || id === driverIdStr || String(id) === String(driverDid)) return true;
+    }
+    return false;
+};
+
+// Get orders for a particular driver from stage1_summary_data and stage3_summary_data only (by stored driverId)
+const getDriverOrdersFromStage1AndStage3 = async (req, res) => {
+    try {
+        const { driverId } = req.params;
+        const driverByDid = Number(driverId);
+        const isNumeric = !Number.isNaN(driverByDid);
+
+        const driver = await Driver.findOne({
+            where: isNumeric ? { did: driverByDid } : { driver_id: driverId }
+        });
+
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: 'Driver not found'
+            });
+        }
+
+        const did = driver.did;
+        const driverIdStr = String(driver.driver_id || '');
+
+        const assignments = await OrderAssignment.findAll({
+            include: [
+                {
+                    model: Order,
+                    as: 'order',
+                    include: [{
+                        model: OrderItem,
+                        as: 'items',
+                        attributes: ['oiid', 'product_name', 'num_boxes', 'packing_type', 'net_weight', 'gross_weight']
+                    }]
+                },
+                {
+                    model: Driver,
+                    as: 'airportDriver',
+                    attributes: ['did', 'driver_id', 'driver_name']
+                }
+            ]
+        });
+
+        const result = [];
+        for (const a of assignments) {
+            const plain = a.get({ plain: true });
+            const inStage1 = driverIdInStageSummary(plain.stage1_summary_data, did, driverIdStr);
+            const inStage3 = driverIdInStageSummary(plain.stage3_summary_data, did, driverIdStr);
+
+            if (inStage1 || inStage3) {
+                const assignmentData = { ...plain };
+                if (assignmentData.stage2_data?.productAssignments) {
+                    assignmentData.stage2_assignments = assignmentData.stage2_data.productAssignments;
+                }
+                result.push({
+                    ...assignmentData,
+                    inStage1,
+                    inStage3
+                });
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            data: result,
+            count: result.length
+        });
+    } catch (error) {
+        console.error('Error fetching driver orders from stage1/stage3:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch driver orders',
+            error: error.message
+        });
+    }
+};
+
 // Get order assignment by order ID
 const getOrderAssignment = async (req, res) => {
     try {
@@ -266,8 +350,24 @@ const updateStage1Assignment = async (req, res) => {
 
         // Determine stage1_status based on assignment completion
         let stage1Status = 'pending'; // Default status
-        
+
+        // Build stage1_summary_data with driverId explicitly stored per driver group
+        let stage1SummaryData = summaryData || null;
         if (summaryData && summaryData.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
+            stage1SummaryData = {
+                ...summaryData,
+                driverAssignments: summaryData.driverAssignments.map(driverGroup => {
+                    const rawId = driverGroup.driverId;
+                    const driverId = rawId != null
+                        ? (typeof rawId === 'number' ? rawId : parseInt(rawId, 10))
+                        : null;
+                    return {
+                        ...driverGroup,
+                        driverId: Number.isNaN(driverId) ? null : driverId
+                    };
+                })
+            };
+
             // Collect all assignments from all driver groups
             const allAssignments = [];
             summaryData.driverAssignments.forEach(driverGroup => {
@@ -275,14 +375,14 @@ const updateStage1Assignment = async (req, res) => {
                     allAssignments.push(...driverGroup.assignments);
                 }
             });
-            
+
             // Check if all assignments have status "Completed"
             if (allAssignments.length > 0) {
                 const allCompleted = allAssignments.every(assignment => {
                     const status = assignment.status || '';
                     return status.toLowerCase() === 'completed';
                 });
-                
+
                 if (allCompleted) {
                     stage1Status = 'completed';
                 }
@@ -294,7 +394,7 @@ const updateStage1Assignment = async (req, res) => {
             order_type: orderType,
             product_assignments: processedAssignments,
             delivery_routes: processedRoutes,
-            stage1_summary_data: summaryData,
+            stage1_summary_data: stage1SummaryData,
             stage1_status: stage1Status
         });
         
@@ -1300,6 +1400,7 @@ const getProductStock = async (req, res) => {
 module.exports = {
     getOrderAssignment,
     getOrdersByDriverId,
+    getDriverOrdersFromStage1AndStage3,
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,

@@ -2,11 +2,15 @@ const express = require('express');
 const router = express.Router();
 const {
     getFlowerOrderAssignment,
+    getDriverFlowerOrdersFromStage1AndStage3,
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,
     updateStage4Assignment
 } = require('../controller/flowerOrderController');
+
+// Get flower orders for a driver from stage1_summary_data and stage3_summary_data – must be before /:orderId
+router.get('/driver/:driverId/stage1-and-stage3', getDriverFlowerOrdersFromStage1AndStage3);
 
 // Get flower order assignment by order ID (only for FLOWER ORDER type)
 router.get('/:orderId', getFlowerOrderAssignment);

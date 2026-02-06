@@ -183,20 +183,20 @@ const updateStage1Assignment = async (req, res) => {
             isRemaining: route.isRemaining || false
         }));
 
-        // Build stage1_summary_data with driverId explicitly stored per driver group
+        // Build stage1_summary_data with driverId stored exactly as received (typically driver's driver_id string)
         let stage1SummaryData = summaryData || null;
         let stage1Status = 'pending';
         if (summaryData?.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
             stage1SummaryData = {
                 ...summaryData,
                 driverAssignments: summaryData.driverAssignments.map(driverGroup => {
-                    const rawId = driverGroup.driverId ?? driverGroup.driver_id;
-                    const driverId = rawId != null
-                        ? (typeof rawId === 'number' ? rawId : parseInt(rawId, 10))
-                        : null;
                     return {
                         ...driverGroup,
-                        driverId: Number.isNaN(driverId) ? null : driverId
+                        // Preserve whatever identifier the frontend sends (prefer driverId, then driver_id),
+                        // and store it as a string so alphanumeric IDs like "DR001" are not coerced.
+                        driverId: driverGroup.driverId != null
+                            ? String(driverGroup.driverId)
+                            : (driverGroup.driver_id != null ? String(driverGroup.driver_id) : null)
                     };
                 })
             };
@@ -574,7 +574,9 @@ const updateStage3Assignment = async (req, res) => {
                 flower_assignment_id: assignment.flower_assignment_id,
                 driverAssignments: summaryData.driverAssignments?.map(da => ({
                     driver: da.driver,
-                    driverId: da.driverId ? parseInt(da.driverId) : null,
+                    // Persist driverId exactly as provided by frontend (typically driver_id),
+                    // without numeric coercion so alphanumeric IDs remain intact.
+                    driverId: da.driverId != null ? String(da.driverId) : null,
                     vehicleNumber: da.vehicleNumber || '',
                     phoneNumber: da.phoneNumber || '',
                     totalPackages: da.totalPackages || 0,

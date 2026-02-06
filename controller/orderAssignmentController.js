@@ -351,19 +351,17 @@ const updateStage1Assignment = async (req, res) => {
         // Determine stage1_status based on assignment completion
         let stage1Status = 'pending'; // Default status
 
-        // Build stage1_summary_data with driverId explicitly stored per driver group
+        // Build stage1_summary_data with driverId stored exactly as received from frontend
         let stage1SummaryData = summaryData || null;
         if (summaryData && summaryData.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
             stage1SummaryData = {
                 ...summaryData,
                 driverAssignments: summaryData.driverAssignments.map(driverGroup => {
-                    const rawId = driverGroup.driverId;
-                    const driverId = rawId != null
-                        ? (typeof rawId === 'number' ? rawId : parseInt(rawId, 10))
-                        : null;
                     return {
                         ...driverGroup,
-                        driverId: Number.isNaN(driverId) ? null : driverId
+                        // Store the identifier as-is (usually the driver's driver_id string).
+                        // This avoids coercing alphanumeric driver IDs (e.g. "DR001") into numbers.
+                        driverId: driverGroup.driverId != null ? String(driverGroup.driverId) : null
                     };
                 })
             };
@@ -946,7 +944,9 @@ const updateStage3Assignment = async (req, res) => {
                 assignment_id: assignment.assignment_id,
                 driverAssignments: summaryData.driverAssignments?.map(da => ({
                     driver: da.driver,
-                    driverId: da.driverId ? parseInt(da.driverId) : null,
+                    // Persist driverId exactly as provided by frontend (typically driver_id),
+                    // without numeric coercion so alphanumeric IDs remain intact.
+                    driverId: da.driverId != null ? String(da.driverId) : null,
                     vehicleNumber: da.vehicleNumber || '',
                     phoneNumber: da.phoneNumber || '',
                     totalPackages: da.totalPackages || 0,

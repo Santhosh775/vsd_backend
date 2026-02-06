@@ -127,19 +127,19 @@ const saveLocalOrder = async (req, res) => {
         // Accept camelCase or snake_case from client
         const summaryDataIn = summaryDataRaw ?? req.body.summary_data ?? null;
 
-        // Build summary_data with driverId explicitly stored per driver assignment (for local_orders.summary_data)
+        // Build summary_data with driverId stored exactly as received (typically driver's driver_id string)
         let summaryDataToStore = summaryDataIn;
         if (summaryDataIn && summaryDataIn.driverAssignments && Array.isArray(summaryDataIn.driverAssignments)) {
             summaryDataToStore = {
                 ...summaryDataIn,
                 driverAssignments: summaryDataIn.driverAssignments.map(driverGroup => {
-                    const rawId = driverGroup.driverId ?? driverGroup.driver_id;
-                    const driverId = rawId != null
-                        ? (typeof rawId === 'number' ? rawId : parseInt(rawId, 10))
-                        : null;
                     return {
                         ...driverGroup,
-                        driverId: Number.isNaN(driverId) ? null : driverId
+                        // Prefer driverId sent from frontend (based on driver_id), fall back to driver_id,
+                        // and store as string so alphanumeric IDs like "DR001" are preserved.
+                        driverId: driverGroup.driverId != null
+                            ? String(driverGroup.driverId)
+                            : (driverGroup.driver_id != null ? String(driverGroup.driver_id) : null)
                     };
                 })
             };

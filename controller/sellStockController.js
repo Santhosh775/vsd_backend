@@ -72,6 +72,7 @@ exports.createSellStock = async (req, res) => {
 
         const sellStock = await SellStock.create({
             stock_id: primaryStockId || stockId,
+            stock_item_name: productName || null,
             entity_type: entityType,
             entity_id: entityId,
             driver_id: driverId || null,
@@ -145,7 +146,7 @@ exports.getSellStockById = async (req, res) => {
 exports.updateSellStock = async (req, res) => {
     try {
         const { id } = req.params;
-        const { stockId, entityType, entityId, driverId, labourId, pricePerKg, quantity, totalAmount } = req.body;
+        const { stockId, stockItemName, entityType, entityId, driverId, labourId, pricePerKg, quantity, totalAmount } = req.body;
         
         const sellStock = await SellStock.findByPk(id);
         if (!sellStock) {
@@ -155,7 +156,7 @@ exports.updateSellStock = async (req, res) => {
             });
         }
         
-        await sellStock.update({
+        const updatePayload = {
             stock_id: stockId,
             entity_type: entityType,
             entity_id: entityId,
@@ -164,7 +165,9 @@ exports.updateSellStock = async (req, res) => {
             price_per_kg: pricePerKg,
             quantity: quantity,
             total_amount: totalAmount
-        });
+        };
+        if (stockItemName !== undefined) updatePayload.stock_item_name = stockItemName || null;
+        await sellStock.update(updatePayload);
         
         res.status(200).json({
             success: true,

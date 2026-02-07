@@ -53,6 +53,31 @@ const getVegetableAvailabilityByFarmer = async (req, res) => {
   }
 };
 
+const getVegetableHistoryByFarmer = async (req, res) => {
+  try {
+    const { farmerId } = req.params;
+    const availabilities = await VegetableAvailability.findAll({
+      where: { farmer_id: farmerId },
+      order: [['created_at', 'DESC']],
+      attributes: ['id', 'vegetable_name', 'vegetable_history', 'created_at']
+    });
+    const vegetable_history = availabilities.flatMap((row) => {
+      const history = parseHistory(row.vegetable_history);
+      return history.map((entry) => ({
+        ...entry,
+        availability_id: row.id,
+        record_created_at: row.created_at
+      }));
+    });
+    res.status(200).json({
+      success: true,
+      data: { farmer_id: farmerId, vegetable_history }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const updateVegetableAvailability = async (req, res) => {
   try {
     const { id } = req.params;
@@ -116,6 +141,7 @@ const deleteVegetableAvailability = async (req, res) => {
 module.exports = {
   createVegetableAvailability,
   getVegetableAvailabilityByFarmer,
+  getVegetableHistoryByFarmer,
   updateVegetableAvailability,
   deleteVegetableAvailability
 };

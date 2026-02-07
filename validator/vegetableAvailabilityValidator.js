@@ -23,12 +23,27 @@ const validateVegetableAvailability = (req, res, next) => {
   }
 
   if (vegetable_history !== undefined && vegetable_history !== null) {
-    if (!Array.isArray(vegetable_history)) {
-      return res.status(400).json({
-        success: false,
-        message: 'vegetable_history must be an array'
-      });
+    let history = vegetable_history;
+    if (!Array.isArray(history)) {
+      if (typeof history === 'string') {
+        try {
+          const parsed = JSON.parse(history);
+          history = Array.isArray(parsed) ? parsed : null;
+        } catch {
+          history = null;
+        }
+      } else {
+        history = null;
+      }
+      if (!Array.isArray(history)) {
+        return res.status(400).json({
+          success: false,
+          message: 'vegetable_history must be an array'
+        });
+      }
     }
+    // Attach normalized array so controller receives an array
+    req.body.vegetable_history = history;
   }
 
   next();

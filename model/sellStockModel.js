@@ -11,6 +11,10 @@ const SellStock = sequelize.define('SellStock', {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    stock_item_name: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+    },
     entity_type: {
         type: DataTypes.ENUM('supplier', 'thirdParty'),
         allowNull: false

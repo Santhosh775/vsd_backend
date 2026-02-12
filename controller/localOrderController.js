@@ -157,7 +157,8 @@ const saveLocalOrder = async (req, res) => {
             assignedBoxes: parseInt(pa.assignedBoxes) || 0,
             price: parseFloat(pa.price) || 0,
             place: pa.place || '',
-            tapeColor: pa.tapeColor || ''
+            tapeColor: pa.tapeColor || '',
+            address: pa.address || ''
         }));
 
         const processedRoutes = deliveryRoutes.map(route => ({

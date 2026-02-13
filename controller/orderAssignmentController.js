@@ -1402,7 +1402,7 @@ const getProductStock = async (req, res) => {
 const updateStage1Status = async (req, res) => {
     try {
         const { orderId, oiid, driverId } = req.params;
-        const { status, dropDriver, collectionStatus } = req.body;
+        const { status } = req.body;
 
         // Try to find assignment by order_id (oid) first, then by order_auto_id
         let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
@@ -1432,12 +1432,9 @@ const updateStage1Status = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Assignment not found for this driver' });
         }
 
-        const updateFields = {};
-        if (status) updateFields[`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`] = status;
-        if (dropDriver) updateFields[`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].dropDriver`] = dropDriver;
-        if (collectionStatus) updateFields[`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].collectionStatus`] = collectionStatus;
-
-        await assignment.update(updateFields);
+        await assignment.update({
+            [`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`]: status
+        });
         res.status(200).json({ success: true, message: 'Status updated successfully' });
     } catch (error) {
         console.error('Error updating stage1 status:', error);

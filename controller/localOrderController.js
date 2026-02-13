@@ -345,7 +345,7 @@ const getAllLocalOrders = async (req, res) => {
 const updateLocalOrderStatus = async (req, res) => {
     try {
         const { orderId, oiid, driverId } = req.params;
-        const { status, dropDriver, collectionStatus } = req.body;
+        const { status } = req.body;
 
         // Try to find local order by order_id (oid) first, then by order_auto_id
         let localOrder = await LocalOrder.findOne({ where: { order_id: orderId } });
@@ -379,12 +379,9 @@ const updateLocalOrderStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Assignment not found for this driver' });
         }
 
-        const updateFields = {};
-        if (status) updateFields[`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`] = status;
-        if (dropDriver) updateFields[`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].dropDriver`] = dropDriver;
-        if (collectionStatus) updateFields[`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].collectionStatus`] = collectionStatus;
-
-        await localOrder.update(updateFields);
+        await localOrder.update({
+            [`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`]: status
+        });
         res.status(200).json({ success: true, message: 'Status updated successfully' });
     } catch (error) {
         console.error('Error updating local order status:', error);

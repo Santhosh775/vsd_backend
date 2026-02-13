@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../model/adminModel');
+const Driver = require('../model/driverModel');
 
 exports.authMiddleware = async (req, res, next) => {
     try {
@@ -13,17 +14,33 @@ exports.authMiddleware = async (req, res, next) => {
         }
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const admin = await Admin.findByPk(decoded.aid);
         
-        if (!admin) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid token. Admin not found.'
-            });
+        // Check if it's an admin token
+        if (decoded.aid) {
+            const admin = await Admin.findByPk(decoded.aid);
+            if (admin) {
+                req.admin = admin;
+                req.user = admin;
+                req.userType = 'admin';
+                return next();
+            }
         }
         
-        req.admin = admin;
-        next();
+        // Check if it's a driver token
+        if (decoded.did) {
+            const driver = await Driver.findByPk(decoded.did);
+            if (driver) {
+                req.driver = driver;
+                req.user = driver;
+                req.userType = 'driver';
+                return next();
+            }
+        }
+        
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid token. User not found.'
+        });
     } catch (error) {
         res.status(401).json({
             success: false,

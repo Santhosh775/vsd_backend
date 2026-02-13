@@ -565,11 +565,25 @@ const deleteOrder = async (req, res) => {
             });
         }
 
-        // Delete related order assignments first
-        const { OrderAssignment } = require('../model/associations');
-        await OrderAssignment.destroy({
-            where: { order_id: id }
-        }, { transaction: t });
+        // Check order type and delete related records accordingly
+        const { OrderAssignment, FlowerOrderAssignment, LocalOrder } = require('../model/associations');
+        
+        if (order.order_type === 'FLOWER ORDER') {
+            // Delete flower order assignment
+            await FlowerOrderAssignment.destroy({
+                where: { order_id: id }
+            }, { transaction: t });
+        } else if (order.order_type === 'LOCAL GRADE ORDER') {
+            // Delete local order
+            await LocalOrder.destroy({
+                where: { order_id: id }
+            }, { transaction: t });
+        } else {
+            // Delete regular order assignment (BOX ORDER)
+            await OrderAssignment.destroy({
+                where: { order_id: id }
+            }, { transaction: t });
+        }
 
         await OrderItem.destroy({
             where: { order_id: id }

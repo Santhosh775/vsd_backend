@@ -8,7 +8,8 @@ const {
     updateStage3Assignment,
     updateStage4Assignment,
     updateStage1Status,
-    updateStage3Status
+    updateStage3Status,
+    deleteFlowerOrder
 } = require('../controller/flowerOrderController');
 
 // Get flower order assignment by order ID (only for FLOWER ORDER type)
@@ -31,5 +32,8 @@ router.patch('/:orderId/stage1/status/:driverId/:oiid', updateStage1Status);
 
 // Update stage3 status for driver app
 router.patch('/:orderId/stage3/status/:driverId/:oiid', updateStage3Status);
+
+// Delete flower order
+router.delete('/:id', deleteFlowerOrder);
 
 module.exports = router;

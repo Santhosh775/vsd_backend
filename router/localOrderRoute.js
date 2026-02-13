@@ -10,4 +10,7 @@ router.get('/', authMiddleware, localOrderController.getAllLocalOrders);
 // Update status for driver app
 router.patch('/:orderId/status/:driverId/:oiid', authMiddleware, localOrderController.updateLocalOrderStatus);
 
+// Delete local order
+router.delete('/:id', authMiddleware, localOrderController.deleteLocalOrder);
+
 module.exports = router;

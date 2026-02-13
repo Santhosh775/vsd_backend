@@ -721,6 +721,43 @@ const updateStage3Status = async (req, res) => {
     }
 };
 
+// Delete flower order
+const deleteFlowerOrder = async (req, res) => {
+    const { sequelize } = require('../config/db');
+    const t = await sequelize.transaction();
+    try {
+        const { id } = req.params;
+
+        // Delete flower order assignment first
+        await FlowerOrderAssignment.destroy({
+            where: { order_id: id }
+        }, { transaction: t });
+
+        // Delete order items
+        const { OrderItem } = require('../model/associations');
+        await OrderItem.destroy({
+            where: { order_id: id }
+        }, { transaction: t });
+
+        // Delete the order
+        const { Order } = require('../model/associations');
+        const order = await Order.findByPk(id, { transaction: t });
+        if (!order) {
+            await t.rollback();
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        await order.destroy({ transaction: t });
+        await t.commit();
+
+        res.status(200).json({ success: true, message: 'Flower order deleted successfully' });
+    } catch (error) {
+        await t.rollback();
+        console.error('Error deleting flower order:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete order', error: error.message });
+    }
+};
+
 module.exports = {
     getFlowerOrderAssignment,
     updateStage1Assignment,
@@ -728,5 +765,6 @@ module.exports = {
     updateStage3Assignment,
     updateStage4Assignment,
     updateStage1Status,
-    updateStage3Status
+    updateStage3Status,
+    deleteFlowerOrder
 };

@@ -392,10 +392,45 @@ const updateLocalOrderStatus = async (req, res) => {
     }
 };
 
+// Delete local order
+const deleteLocalOrder = async (req, res) => {
+    const transaction = await sequelize.transaction();
+    try {
+        const { id } = req.params;
+
+        // Delete local order first
+        await LocalOrder.destroy({
+            where: { order_id: id }
+        }, { transaction });
+
+        // Delete order items
+        await OrderItem.destroy({
+            where: { order_id: id }
+        }, { transaction });
+
+        // Delete the order
+        const order = await Order.findByPk(id, { transaction });
+        if (!order) {
+            await transaction.rollback();
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        await order.destroy({ transaction });
+        await transaction.commit();
+
+        res.status(200).json({ success: true, message: 'Local order deleted successfully' });
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error deleting local order:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete order', error: error.message });
+    }
+};
+
 module.exports = {
     getLocalOrder,
     saveLocalOrder,
     getAllLocalOrders,
     getDriverLocalOrders,
-    updateLocalOrderStatus
+    updateLocalOrderStatus,
+    deleteLocalOrder
 };

@@ -341,9 +341,53 @@ const getAllLocalOrders = async (req, res) => {
     }
 };
 
+// Update summary_data status for driver app (local orders)
+const updateLocalOrderStatus = async (req, res) => {
+    try {
+        const { orderId, oiid, driverId } = req.params;
+        const { status, dropDriver, collectionStatus } = req.body;
+
+        const localOrder = await LocalOrder.findOne({ where: { order_id: orderId } });
+        if (!localOrder || !localOrder.summary_data) {
+            return res.status(404).json({ success: false, message: 'Local order not found' });
+        }
+
+        const summaryData = localOrder.summary_data;
+        let driverIndex = -1;
+        let assignmentIndex = -1;
+
+        summaryData.driverAssignments?.forEach((driverGroup, dIdx) => {
+            if (String(driverGroup.driverId) === String(driverId)) {
+                driverGroup.assignments?.forEach((a, aIdx) => {
+                    if (String(a.oiid) === String(oiid)) {
+                        driverIndex = dIdx;
+                        assignmentIndex = aIdx;
+                    }
+                });
+            }
+        });
+
+        if (driverIndex === -1 || assignmentIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Assignment not found for this driver' });
+        }
+
+        const updateFields = {};
+        if (status) updateFields[`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`] = status;
+        if (dropDriver) updateFields[`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].dropDriver`] = dropDriver;
+        if (collectionStatus) updateFields[`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].collectionStatus`] = collectionStatus;
+
+        await localOrder.update(updateFields);
+        res.status(200).json({ success: true, message: 'Status updated successfully' });
+    } catch (error) {
+        console.error('Error updating local order status:', error);
+        res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
+    }
+};
+
 module.exports = {
     getLocalOrder,
     saveLocalOrder,
     getAllLocalOrders,
-    getDriverLocalOrders
+    getDriverLocalOrders,
+    updateLocalOrderStatus
 };

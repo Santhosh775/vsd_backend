@@ -13,7 +13,9 @@ const {
     getAssignmentOptions,
     getAllStock,
     getAvailableStockByProduct,
-    getProductStock
+    getProductStock,
+    updateStage1Status,
+    updateStage3Status
 } = require('../controller/orderAssignmentController');
 
 // Get orders assigned to a driver (for driver app) – must be before /:orderId
@@ -54,5 +56,11 @@ router.get('/stock/available/all', getAvailableStockByProduct);
 
 // Get available stock for specific product
 router.get('/stock/product/:productName', getProductStock);
+
+// Update stage1 status for driver app
+router.patch('/:orderId/stage1/status/:driverId/:oiid', updateStage1Status);
+
+// Update stage3 status for driver app
+router.patch('/:orderId/stage3/status/:driverId/:oiid', updateStage3Status);
 
 module.exports = router;

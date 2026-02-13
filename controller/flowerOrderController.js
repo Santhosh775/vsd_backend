@@ -630,10 +630,95 @@ const updateStage4Assignment = async (req, res) => {
     }
 };
 
+// Update stage1_summary_data status for driver app
+const updateStage1Status = async (req, res) => {
+    try {
+        const { orderId, oiid, driverId } = req.params;
+        const { status, dropDriver, collectionStatus } = req.body;
+
+        const assignment = await FlowerOrderAssignment.findOne({ where: { order_id: orderId } });
+        if (!assignment || !assignment.stage1_summary_data) {
+            return res.status(404).json({ success: false, message: 'Assignment not found' });
+        }
+
+        const stage1Data = assignment.stage1_summary_data;
+        let driverIndex = -1;
+        let assignmentIndex = -1;
+
+        stage1Data.driverAssignments?.forEach((driverGroup, dIdx) => {
+            if (String(driverGroup.driverId) === String(driverId)) {
+                driverGroup.assignments?.forEach((a, aIdx) => {
+                    if (String(a.oiid) === String(oiid)) {
+                        driverIndex = dIdx;
+                        assignmentIndex = aIdx;
+                    }
+                });
+            }
+        });
+
+        if (driverIndex === -1 || assignmentIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Assignment not found for this driver' });
+        }
+
+        const updateFields = {};
+        if (status) updateFields[`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`] = status;
+        if (dropDriver) updateFields[`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].dropDriver`] = dropDriver;
+        if (collectionStatus) updateFields[`stage1_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].collectionStatus`] = collectionStatus;
+
+        await assignment.update(updateFields);
+        res.status(200).json({ success: true, message: 'Status updated successfully' });
+    } catch (error) {
+        console.error('Error updating flower stage1 status:', error);
+        res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
+    }
+};
+
+// Update stage3_summary_data status for driver app
+const updateStage3Status = async (req, res) => {
+    try {
+        const { orderId, oiid, driverId } = req.params;
+        const { status } = req.body;
+
+        const assignment = await FlowerOrderAssignment.findOne({ where: { order_id: orderId } });
+        if (!assignment || !assignment.stage3_summary_data) {
+            return res.status(404).json({ success: false, message: 'Assignment not found' });
+        }
+
+        const stage3Data = assignment.stage3_summary_data;
+        let driverIndex = -1;
+        let assignmentIndex = -1;
+
+        stage3Data.driverAssignments?.forEach((driverGroup, dIdx) => {
+            if (String(driverGroup.driverId) === String(driverId)) {
+                driverGroup.assignments?.forEach((a, aIdx) => {
+                    if (String(a.oiid) === String(oiid)) {
+                        driverIndex = dIdx;
+                        assignmentIndex = aIdx;
+                    }
+                });
+            }
+        });
+
+        if (driverIndex === -1 || assignmentIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Assignment not found for this driver' });
+        }
+
+        await assignment.update({
+            [`stage3_summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`]: status
+        });
+        res.status(200).json({ success: true, message: 'Status updated successfully' });
+    } catch (error) {
+        console.error('Error updating flower stage3 status:', error);
+        res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
+    }
+};
+
 module.exports = {
     getFlowerOrderAssignment,
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,
-    updateStage4Assignment
+    updateStage4Assignment,
+    updateStage1Status,
+    updateStage3Status
 };

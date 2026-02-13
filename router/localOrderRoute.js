@@ -7,4 +7,7 @@ router.get('/:orderId', authMiddleware, localOrderController.getLocalOrder);
 router.post('/:orderId', authMiddleware, localOrderController.saveLocalOrder);
 router.get('/', authMiddleware, localOrderController.getAllLocalOrders);
 
+// Update status for driver app
+router.patch('/:orderId/status/:driverId/:oiid', authMiddleware, localOrderController.updateLocalOrderStatus);
+
 module.exports = router;

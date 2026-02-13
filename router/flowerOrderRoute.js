@@ -6,7 +6,9 @@ const {
     updateStage1Assignment,
     updateStage2Assignment,
     updateStage3Assignment,
-    updateStage4Assignment
+    updateStage4Assignment,
+    updateStage1Status,
+    updateStage3Status
 } = require('../controller/flowerOrderController');
 
 // Get flower order assignment by order ID (only for FLOWER ORDER type)
@@ -23,5 +25,11 @@ router.put('/:orderId/stage3', updateStage3Assignment);
 
 // Update Stage 4 - Review
 router.put('/:orderId/stage4', updateStage4Assignment);
+
+// Update stage1 status for driver app
+router.patch('/:orderId/stage1/status/:driverId/:oiid', updateStage1Status);
+
+// Update stage3 status for driver app
+router.patch('/:orderId/stage3/status/:driverId/:oiid', updateStage3Status);
 
 module.exports = router;

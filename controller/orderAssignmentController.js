@@ -1404,7 +1404,11 @@ const updateStage1Status = async (req, res) => {
         const { orderId, oiid, driverId } = req.params;
         const { status, dropDriver, collectionStatus } = req.body;
 
-        const assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
+        // Try to find assignment by order_id (oid) first, then by order_auto_id
+        let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
+        if (!assignment) {
+            assignment = await OrderAssignment.findOne({ where: { order_auto_id: orderId } });
+        }
         if (!assignment || !assignment.stage1_summary_data) {
             return res.status(404).json({ success: false, message: 'Assignment not found' });
         }
@@ -1447,7 +1451,11 @@ const updateStage3Status = async (req, res) => {
         const { orderId, oiid, driverId } = req.params;
         const { status } = req.body;
 
-        const assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
+        // Try to find assignment by order_id (oid) first, then by order_auto_id
+        let assignment = await OrderAssignment.findOne({ where: { order_id: orderId } });
+        if (!assignment) {
+            assignment = await OrderAssignment.findOne({ where: { order_auto_id: orderId } });
+        }
         if (!assignment || !assignment.stage3_summary_data) {
             return res.status(404).json({ success: false, message: 'Assignment not found' });
         }

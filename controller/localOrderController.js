@@ -347,7 +347,15 @@ const updateLocalOrderStatus = async (req, res) => {
         const { orderId, oiid, driverId } = req.params;
         const { status, dropDriver, collectionStatus } = req.body;
 
-        const localOrder = await LocalOrder.findOne({ where: { order_id: orderId } });
+        // Try to find local order by order_id (oid) first, then by order_auto_id
+        let localOrder = await LocalOrder.findOne({ where: { order_id: orderId } });
+        if (!localOrder) {
+            // Try finding by matching the order's order_id field (the auto-generated one like "CUSTOMERNAME_DD-MM-YYYY")
+            const order = await Order.findOne({ where: { order_id: orderId } });
+            if (order) {
+                localOrder = await LocalOrder.findOne({ where: { order_id: order.oid } });
+            }
+        }
         if (!localOrder || !localOrder.summary_data) {
             return res.status(404).json({ success: false, message: 'Local order not found' });
         }

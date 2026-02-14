@@ -107,22 +107,31 @@ const updateStage1Assignment = async (req, res) => {
             isRemaining: route.isRemaining || false
         }));
 
-        // Build stage1_summary_data with driverId stored exactly as received (typically driver's driver_id string)
+        // Build stage1_summary_data with both did and driverId (driver_id)
         let stage1SummaryData = summaryData || null;
         let stage1Status = 'pending';
         if (summaryData?.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
             stage1SummaryData = {
                 ...summaryData,
-                driverAssignments: summaryData.driverAssignments.map(driverGroup => {
+                driverAssignments: await Promise.all(summaryData.driverAssignments.map(async driverGroup => {
+                    // Frontend sends both did and driverId, use them directly if available
+                    let did = driverGroup.did || driverGroup.driverId;
+                    let driverId = driverGroup.driverId;
+                    
+                    // If driverId is missing but did exists, fetch from database
+                    if (did && !driverId) {
+                        const driver = await Driver.findByPk(did);
+                        if (driver) {
+                            driverId = driver.driver_id;
+                        }
+                    }
+                    
                     return {
                         ...driverGroup,
-                        // Preserve whatever identifier the frontend sends (prefer driverId, then driver_id),
-                        // and store it as a string so alphanumeric IDs like "DR001" are not coerced.
-                        driverId: driverGroup.driverId != null
-                            ? String(driverGroup.driverId)
-                            : (driverGroup.driver_id != null ? String(driverGroup.driver_id) : null)
+                        did: did != null ? String(did) : null,
+                        driverId: driverId != null ? String(driverId) : null
                     };
-                })
+                }))
             };
 
             const allAssignments = [];
@@ -496,30 +505,43 @@ const updateStage3Assignment = async (req, res) => {
         if (summaryData) {
             stage3Summary = {
                 flower_assignment_id: assignment.flower_assignment_id,
-                driverAssignments: summaryData.driverAssignments?.map(da => ({
-                    driver: da.driver,
-                    // Persist driverId exactly as provided by frontend (typically driver_id),
-                    // without numeric coercion so alphanumeric IDs remain intact.
-                    driverId: da.driverId != null ? String(da.driverId) : null,
-                    vehicleNumber: da.vehicleNumber || '',
-                    phoneNumber: da.phoneNumber || '',
-                    totalPackages: da.totalPackages || 0,
-                    totalWeight: da.totalWeight || 0,
-                    assignments: da.assignments?.map(a => ({
-                        product: a.product,
-                        grossWeight: a.grossWeight,
-                        labour: a.labour,
-                        ct: a.ct,
-                        noOfPkgs: a.noOfPkgs || 0,
-                        tapeName: a.tapeName || '',
-                        tapeColor: a.tapeColor || '',
-                        tapeQuantity: a.tapeQuantity || '',
-                        airportName: a.airportName || '',
-                        airportLocation: a.airportLocation || '',
-                        status: a.status || 'pending',
-                        oiid: a.oiid
-                    }))
-                })),
+                driverAssignments: await Promise.all(summaryData.driverAssignments?.map(async da => {
+                    // Frontend sends both did and driverId, use them directly if available
+                    let did = da.did || da.driverId;
+                    let driverId = da.driverId;
+                    
+                    // If driverId is missing but did exists, fetch from database
+                    if (did && !driverId) {
+                        const driver = await Driver.findByPk(did);
+                        if (driver) {
+                            driverId = driver.driver_id;
+                        }
+                    }
+                    
+                    return {
+                        driver: da.driver,
+                        did: did != null ? String(did) : null,
+                        driverId: driverId != null ? String(driverId) : null,
+                        vehicleNumber: da.vehicleNumber || '',
+                        phoneNumber: da.phoneNumber || '',
+                        totalPackages: da.totalPackages || 0,
+                        totalWeight: da.totalWeight || 0,
+                        assignments: da.assignments?.map(a => ({
+                            product: a.product,
+                            grossWeight: a.grossWeight,
+                            labour: a.labour,
+                            ct: a.ct,
+                            noOfPkgs: a.noOfPkgs || 0,
+                            tapeName: a.tapeName || '',
+                            tapeColor: a.tapeColor || '',
+                            tapeQuantity: a.tapeQuantity || '',
+                            airportName: a.airportName || '',
+                            airportLocation: a.airportLocation || '',
+                            status: a.status || 'pending',
+                            oiid: a.oiid
+                        }))
+                    };
+                }) || []),
                 airportGroups: airportGroupsWithTape,
                 airportTapeData: normalizedAirportTapes,
                 totalProducts: summaryData.totalProducts || 0,

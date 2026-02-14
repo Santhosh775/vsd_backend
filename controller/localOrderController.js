@@ -127,21 +127,30 @@ const saveLocalOrder = async (req, res) => {
         // Accept camelCase or snake_case from client
         const summaryDataIn = summaryDataRaw ?? req.body.summary_data ?? null;
 
-        // Build summary_data with driverId stored exactly as received (typically driver's driver_id string)
+        // Build summary_data with both did and driverId (driver_id)
         let summaryDataToStore = summaryDataIn;
         if (summaryDataIn && summaryDataIn.driverAssignments && Array.isArray(summaryDataIn.driverAssignments)) {
             summaryDataToStore = {
                 ...summaryDataIn,
-                driverAssignments: summaryDataIn.driverAssignments.map(driverGroup => {
+                driverAssignments: await Promise.all(summaryDataIn.driverAssignments.map(async driverGroup => {
+                    // Frontend sends both did and driverId, use them directly if available
+                    let did = driverGroup.did || driverGroup.driverId;
+                    let driverId = driverGroup.driverId;
+                    
+                    // If driverId is missing but did exists, fetch from database
+                    if (did && !driverId) {
+                        const driver = await Driver.findByPk(did);
+                        if (driver) {
+                            driverId = driver.driver_id;
+                        }
+                    }
+                    
                     return {
                         ...driverGroup,
-                        // Prefer driverId sent from frontend (based on driver_id), fall back to driver_id,
-                        // and store as string so alphanumeric IDs like "DR001" are preserved.
-                        driverId: driverGroup.driverId != null
-                            ? String(driverGroup.driverId)
-                            : (driverGroup.driver_id != null ? String(driverGroup.driver_id) : null)
+                        did: did != null ? String(did) : null,
+                        driverId: driverId != null ? String(driverId) : null
                     };
-                })
+                }))
             };
         }
 

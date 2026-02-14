@@ -352,19 +352,30 @@ const updateStage1Assignment = async (req, res) => {
         // Determine stage1_status based on assignment completion
         let stage1Status = 'pending'; // Default status
 
-        // Build stage1_summary_data with driverId stored exactly as received from frontend
+        // Build stage1_summary_data with both did and driverId (driver_id)
         let stage1SummaryData = summaryData || null;
         if (summaryData && summaryData.driverAssignments && Array.isArray(summaryData.driverAssignments)) {
             stage1SummaryData = {
                 ...summaryData,
-                driverAssignments: summaryData.driverAssignments.map(driverGroup => {
+                driverAssignments: await Promise.all(summaryData.driverAssignments.map(async driverGroup => {
+                    // Frontend sends both did and driverId, use them directly if available
+                    let did = driverGroup.did || driverGroup.driverId;
+                    let driverId = driverGroup.driverId;
+                    
+                    // If driverId is missing or did is missing, fetch from database
+                    if (did && !driverId) {
+                        const driver = await Driver.findByPk(did);
+                        if (driver) {
+                            driverId = driver.driver_id;
+                        }
+                    }
+                    
                     return {
                         ...driverGroup,
-                        // Store the identifier as-is (usually the driver's driver_id string).
-                        // This avoids coercing alphanumeric driver IDs (e.g. "DR001") into numbers.
-                        driverId: driverGroup.driverId != null ? String(driverGroup.driverId) : null
+                        did: did != null ? String(did) : null,
+                        driverId: driverId != null ? String(driverId) : null
                     };
-                })
+                }))
             };
 
             // Collect all assignments from all driver groups
@@ -943,30 +954,43 @@ const updateStage3Assignment = async (req, res) => {
 
             stage3Summary = {
                 assignment_id: assignment.assignment_id,
-                driverAssignments: summaryData.driverAssignments?.map(da => ({
-                    driver: da.driver,
-                    // Persist driverId exactly as provided by frontend (typically driver_id),
-                    // without numeric coercion so alphanumeric IDs remain intact.
-                    driverId: da.driverId != null ? String(da.driverId) : null,
-                    vehicleNumber: da.vehicleNumber || '',
-                    phoneNumber: da.phoneNumber || '',
-                    totalPackages: da.totalPackages || 0,
-                    totalWeight: da.totalWeight || 0,
-                    assignments: da.assignments?.map(a => ({
-                        product: a.product,
-                        grossWeight: a.grossWeight,
-                        labour: a.labour,
-                        ct: a.ct,
-                        noOfPkgs: a.noOfPkgs || 0,
-                        tapeName: a.tapeName || '',
-                        tapeColor: a.tapeColor || '',
-                        tapeQuantity: a.tapeQuantity || '',
-                        airportName: a.airportName || '',
-                        airportLocation: a.airportLocation || '',
-                        status: a.status || 'pending',
-                        oiid: a.oiid
-                    }))
-                })),
+                driverAssignments: await Promise.all(summaryData.driverAssignments?.map(async da => {
+                    // Frontend sends both did and driverId, use them directly if available
+                    let did = da.did || da.driverId;
+                    let driverId = da.driverId;
+                    
+                    // If driverId is missing or did is missing, fetch from database
+                    if (did && !driverId) {
+                        const driver = await Driver.findByPk(did);
+                        if (driver) {
+                            driverId = driver.driver_id;
+                        }
+                    }
+                    
+                    return {
+                        driver: da.driver,
+                        did: did != null ? String(did) : null,
+                        driverId: driverId != null ? String(driverId) : null,
+                        vehicleNumber: da.vehicleNumber || '',
+                        phoneNumber: da.phoneNumber || '',
+                        totalPackages: da.totalPackages || 0,
+                        totalWeight: da.totalWeight || 0,
+                        assignments: da.assignments?.map(a => ({
+                            product: a.product,
+                            grossWeight: a.grossWeight,
+                            labour: a.labour,
+                            ct: a.ct,
+                            noOfPkgs: a.noOfPkgs || 0,
+                            tapeName: a.tapeName || '',
+                            tapeColor: a.tapeColor || '',
+                            tapeQuantity: a.tapeQuantity || '',
+                            airportName: a.airportName || '',
+                            airportLocation: a.airportLocation || '',
+                            status: a.status || 'pending',
+                            oiid: a.oiid
+                        }))
+                    };
+                }) || []),
                 // Persist airport-level tape info: tapes array per airport in each group and as separate map
                 airportGroups: airportGroupsWithTape,
                 airportTapeData: normalizedAirportTapes, // { [airportName]: [ { tapeName, tapeQuantity, tapeColor }, ... ] }

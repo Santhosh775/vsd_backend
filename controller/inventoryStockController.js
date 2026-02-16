@@ -5,7 +5,7 @@ const { sequelize } = require('../config/db');
 
 exports.createInventoryStock = async (req, res) => {
     try {
-        const { invoice_no, company_name, company_id, item_name, hsn_code, quantity, price_per_unit, gst_percentage, inventory_id } = req.body;
+        const { invoice_no, company_name, company_id, item_name, hsn_code, quantity, price_per_unit, gst_percentage, inventory_id, date } = req.body;
         
         const total_with_gst = (quantity * price_per_unit * (1 + gst_percentage / 100)).toFixed(2);
         
@@ -19,7 +19,8 @@ exports.createInventoryStock = async (req, res) => {
             price_per_unit,
             gst_percentage,
             total_with_gst,
-            inventory_id
+            inventory_id,
+            date
         });
         
         // Update inventory quantity
@@ -109,7 +110,7 @@ exports.getInventoryStockById = async (req, res) => {
 exports.updateInventoryStock = async (req, res) => {
     try {
         const { id } = req.params;
-        const { invoice_no, company_name, company_id, item_name, hsn_code, quantity, price_per_unit, gst_percentage, inventory_id } = req.body;
+        const { invoice_no, company_name, company_id, item_name, hsn_code, quantity, price_per_unit, gst_percentage, inventory_id, date } = req.body;
         
         const stock = await InventoryStock.findByPk(id);
         if (!stock) {
@@ -132,7 +133,8 @@ exports.updateInventoryStock = async (req, res) => {
             price_per_unit,
             gst_percentage,
             total_with_gst,
-            inventory_id
+            inventory_id,
+            date
         });
         
         // Update inventory quantities

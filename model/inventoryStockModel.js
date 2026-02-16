@@ -55,6 +55,10 @@ const InventoryStock = sequelize.define('InventoryStock', {
             model: 'inventories',
             key: 'id'
         }
+    },
+    date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
     }
 }, {
     tableName: 'inventory_stocks',

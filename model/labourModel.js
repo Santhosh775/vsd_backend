@@ -26,9 +26,6 @@ const Labour = sequelize.define('Labour', {
     aadhaar_number: {
         type: DataTypes.STRING,
         allowNull: true,
-        validate: {
-            is: /^[0-9]{12}$/
-        }
     },
     date_of_birth: {
         type: DataTypes.DATEONLY,

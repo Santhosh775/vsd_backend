@@ -73,7 +73,7 @@ const getDriverLocalOrders = async (req, res) => {
 const getLocalOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
-        
+
         const localOrder = await LocalOrder.findOne({
             where: { order_id: orderId },
             include: [{
@@ -85,25 +85,25 @@ const getLocalOrder = async (req, res) => {
                 }]
             }]
         });
-        
+
         if (!localOrder) {
             const order = await Order.findByPk(orderId, {
                 include: [{ model: OrderItem, as: 'items' }]
             });
-            
+
             if (!order) {
                 return res.status(404).json({
                     success: false,
                     message: 'Order not found'
                 });
             }
-            
+
             return res.status(200).json({
                 success: true,
                 data: { order: order.toJSON() }
             });
         }
-        
+
         res.status(200).json({
             success: true,
             data: localOrder
@@ -136,7 +136,7 @@ const saveLocalOrder = async (req, res) => {
                     // Frontend sends both did and driverId, use them directly if available
                     let did = driverGroup.did || driverGroup.driverId;
                     let driverId = driverGroup.driverId;
-                    
+
                     // If driverId is missing but did exists, fetch from database
                     if (did && !driverId) {
                         const driver = await Driver.findByPk(did);
@@ -144,7 +144,7 @@ const saveLocalOrder = async (req, res) => {
                             driverId = driver.driver_id;
                         }
                     }
-                    
+
                     return {
                         ...driverGroup,
                         did: did != null ? String(did) : null,
@@ -155,7 +155,7 @@ const saveLocalOrder = async (req, res) => {
         }
 
         let localOrder = await LocalOrder.findOne({ where: { order_id: orderId }, transaction });
-        
+
         const processedAssignments = productAssignments.map(pa => ({
             id: pa.id,
             product: pa.product || pa.product_name,
@@ -192,7 +192,7 @@ const saveLocalOrder = async (req, res) => {
             if (!dataToCheck || !dataToCheck.driverAssignments || !Array.isArray(dataToCheck.driverAssignments)) {
                 return false;
             }
-            
+
             // Collect all assignments from all driver groups
             const allAssignments = [];
             dataToCheck.driverAssignments.forEach(driverGroup => {
@@ -200,12 +200,12 @@ const saveLocalOrder = async (req, res) => {
                     allAssignments.push(...driverGroup.assignments);
                 }
             });
-            
+
             // Check if all assignments have status "Completed" (case-insensitive)
             if (allAssignments.length === 0) {
                 return false;
             }
-            
+
             return allAssignments.every(assignment => {
                 const status = assignment.status || '';
                 return status.toLowerCase() === 'completed';
@@ -215,14 +215,14 @@ const saveLocalOrder = async (req, res) => {
         // Check existing summary_data in database first, then incoming summaryData
         let allCompleted = false;
         let dataToUseForStock = null;
-        
+
         // First, check if there's existing summary_data in the database
         if (localOrder && localOrder.summary_data) {
             try {
                 const existingSummaryData = typeof localOrder.summary_data === 'string'
                     ? JSON.parse(localOrder.summary_data)
                     : localOrder.summary_data;
-                
+
                 if (checkAllCompleted(existingSummaryData)) {
                     allCompleted = true;
                     dataToUseForStock = existingSummaryData;
@@ -231,7 +231,7 @@ const saveLocalOrder = async (req, res) => {
                 console.error('Error parsing existing summary_data:', e);
             }
         }
-        
+
         // If existing data is not all completed, check incoming summaryData
         if (!allCompleted && summaryDataToStore) {
             if (checkAllCompleted(summaryDataToStore)) {
@@ -247,7 +247,7 @@ const saveLocalOrder = async (req, res) => {
                 where: { order_id: orderId },
                 transaction
             });
-            
+
             // Only process stock entries if they don't already exist for this order
             if (existingStockForOrder.length === 0) {
                 const today = new Date().toISOString().split('T')[0];
@@ -303,23 +303,23 @@ const saveLocalOrder = async (req, res) => {
                 status: finalStatus
             }, { transaction });
         }
-        
+
         await transaction.commit();
-        
-        res.status(200).json({ 
-            success: true, 
-            message: allCompleted 
-                ? 'Local order saved successfully. Stock entries created.' 
-                : 'Local order saved successfully', 
-            data: localOrder 
+
+        res.status(200).json({
+            success: true,
+            message: allCompleted
+                ? 'Local order saved successfully. Stock entries created.'
+                : 'Local order saved successfully',
+            data: localOrder
         });
     } catch (error) {
         await transaction.rollback();
         console.error('Error saving local order:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to save local order', 
-            error: error.message 
+        res.status(500).json({
+            success: false,
+            message: 'Failed to save local order',
+            error: error.message
         });
     }
 };
@@ -335,7 +335,7 @@ const getAllLocalOrders = async (req, res) => {
             }],
             order: [['created_at', 'DESC']]
         });
-        
+
         res.status(200).json({
             success: true,
             data: localOrders
@@ -356,25 +356,48 @@ const updateLocalOrderStatus = async (req, res) => {
         const { orderId, oiid, driverId } = req.params;
         const { status } = req.body;
 
-        // Try to find local order by order_id (oid) first, then by order_auto_id
+        // LocalOrder.order_id is a STRING FK referencing orders.oid (e.g. 'ORD-027')
+        // So direct lookup by orderId string works
         let localOrder = await LocalOrder.findOne({ where: { order_id: orderId } });
+
         if (!localOrder) {
-            // Try finding by matching the order's order_id field (the auto-generated one like "CUSTOMERNAME_DD-MM-YYYY")
+            // orderId might be some other format — try finding via Order table
             const order = await Order.findOne({ where: { order_id: orderId } });
             if (order) {
+                // order.oid is the string ID (e.g. 'ORD-027') stored in LocalOrder.order_id
                 localOrder = await LocalOrder.findOne({ where: { order_id: order.oid } });
             }
         }
+
         if (!localOrder || !localOrder.summary_data) {
             return res.status(404).json({ success: false, message: 'Local order not found' });
         }
 
-        const summaryData = localOrder.summary_data;
+        // Always parse summary_data — it may be stored as a string in some DB configs
+        const summaryData = typeof localOrder.summary_data === 'string'
+            ? JSON.parse(localOrder.summary_data)
+            : JSON.parse(JSON.stringify(localOrder.summary_data)); // deep clone to allow mutation
+
+        // DEBUG: log what's actually stored so we can see the driverId/oiid values
+        console.log('DEBUG updateLocalOrderStatus - orderId:', orderId, 'driverId param:', driverId, 'oiid param:', oiid);
+        console.log('DEBUG summary_data driverAssignments:', JSON.stringify(
+            summaryData.driverAssignments?.map(g => ({
+                driverId: g.driverId,
+                did: g.did,
+                assignmentOiids: g.assignments?.map(a => a.oiid)
+            }))
+        ));
+
         let driverIndex = -1;
         let assignmentIndex = -1;
 
         summaryData.driverAssignments?.forEach((driverGroup, dIdx) => {
-            if (String(driverGroup.driverId) === String(driverId)) {
+            // Match against both driverId and did fields (stored as strings)
+            const matchesDriver =
+                String(driverGroup.driverId) === String(driverId) ||
+                String(driverGroup.did) === String(driverId);
+
+            if (matchesDriver) {
                 driverGroup.assignments?.forEach((a, aIdx) => {
                     if (String(a.oiid) === String(oiid)) {
                         driverIndex = dIdx;
@@ -388,15 +411,18 @@ const updateLocalOrderStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Assignment not found for this driver' });
         }
 
-        await localOrder.update({
-            [`summary_data.driverAssignments[${driverIndex}].assignments[${assignmentIndex}].status`]: status
-        });
+        // CRITICAL FIX: Sequelize dot-notation doesn't work for JSON columns.
+        // Must mutate the object and save the entire summary_data field.
+        summaryData.driverAssignments[driverIndex].assignments[assignmentIndex].status = status;
+        await localOrder.update({ summary_data: summaryData });
+
         res.status(200).json({ success: true, message: 'Status updated successfully' });
     } catch (error) {
         console.error('Error updating local order status:', error);
         res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
     }
 };
+
 
 // Delete local order
 const deleteLocalOrder = async (req, res) => {

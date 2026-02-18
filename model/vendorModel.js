@@ -11,6 +11,10 @@ const Vendor = sequelize.define('Vendor', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    place: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     vendor_type: {
         type: DataTypes.ENUM('farmer', 'supplier', 'thirdparty'),
         allowNull: false
@@ -38,19 +42,19 @@ const Vendor = sequelize.define('Vendor', {
     },
     address: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     city: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     state: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     pin_code: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     contact_person: {
         type: DataTypes.STRING,

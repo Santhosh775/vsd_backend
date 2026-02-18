@@ -11,6 +11,10 @@ const ThirdParty = sequelize.define('ThirdParty', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    place: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     registration_number: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -34,19 +38,19 @@ const ThirdParty = sequelize.define('ThirdParty', {
     },
     address: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     city: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     state: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     pin_code: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     contact_person: {
         type: DataTypes.STRING,

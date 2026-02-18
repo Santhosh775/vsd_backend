@@ -22,6 +22,7 @@ const Labour = require('./labourModel');
 const LabourAttendance = require('./labourAttendanceModel');
 const LabourRate = require('./labourRateModel');
 const LabourExcessPay = require('./labourExcessPayModel');
+const LabourRemarks = require('./labourRemarkModel');
 const ExcessKM = require('./excessKmModel');
 const LocalOrder = require('./LocalOrder');
 const Customer = require('./customerModel');
@@ -211,7 +212,7 @@ Driver.hasMany(DriverRemarks, {
 
 DriverRemarks.belongsTo(Driver, {
     foreignKey: 'driver_id',
-    as: 'remarkDriver'
+    as: 'driver'
 });
 
 // Driver-DriverRate associations (based on delivery_type)
@@ -305,6 +306,19 @@ LabourRate.hasMany(Labour, {
     as: 'labours'
 });
 
+// Labour-LabourRemarks associations
+Labour.hasMany(LabourRemarks, {
+    foreignKey: 'labour_id',
+    sourceKey: 'lid',
+    as: 'remarks'
+});
+
+LabourRemarks.belongsTo(Labour, {
+    foreignKey: 'labour_id',
+    targetKey: 'lid',
+    as: 'labour'
+});
+
 // Admin-RolesPermission associations
 Admin.hasOne(RolesPermission, {
     foreignKey: 'aid',
@@ -345,6 +359,7 @@ module.exports = {
     LabourAttendance,
     LabourRate,
     LabourExcessPay,
+    LabourRemarks,
     ExcessKM,
     LocalOrder,
     Customer,

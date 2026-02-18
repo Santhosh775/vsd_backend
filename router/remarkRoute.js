@@ -1,15 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const remarkController = require('../controller/remarkController');
-const { 
-    validateRemark, 
-    validateRemarkUpdate 
-} = require('../validator/driverValidator');
-const { authMiddleware } = require('../middleware/authMiddleware');
 
 // Create a new remark (Admin only)
 router.post('/create', 
-    validateRemark,
     remarkController.createRemark
 );
 
@@ -45,7 +39,6 @@ router.get('/:id',
 
 // Update remark by ID (Admin only)
 router.put('/:id',  
-    validateRemarkUpdate,
     remarkController.updateRemark
 );
 

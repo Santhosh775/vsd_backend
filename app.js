@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const {connectDB, sequelize} = require('./config/db');
+const { connectDB, sequelize } = require('./config/db');
 const dotenv = require('dotenv');
 dotenv.config();
 const cors = require('cors');
@@ -20,7 +20,7 @@ app.use('/uploads', express.static('uploads'));
 app.use(cors(
     {
         origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true
     }
@@ -56,7 +56,6 @@ const advancePayRoute = require('./router/advancePayRoute');
 const driverAttendance = require('./router/driverAttendanceRoute');
 const fuelExpense = require('./router/fuelexpenseRoute');
 const remark = require('./router/remarkRoute');
-const labourRemarkRoute = require('./router/labourRemarkRoute');
 const orderRoute = require('./router/orderRoute');
 const orderAssignmentRoute = require('./router/orderAssignmentRoute');
 const flowerOrderRoute = require('./router/flowerOrderRoute');
@@ -79,6 +78,7 @@ const excessKmRoute = require('./router/excessKmRoute');
 const notificationRoute = require('./router/notificationRoute');
 const payoutRoute = require('./router/payoutRoute');
 const dailyPayoutsRoute = require('./router/dailyPayoutsRoute');
+const driverNotificationRoute = require('./router/driverNotificationRoute');
 
 
 // app.use('/api/v1', (req, res) => {
@@ -97,7 +97,6 @@ app.use('/api/v1/advance-pay', advancePayRoute);
 app.use('/api/v1/driver-attendance', driverAttendance);
 app.use('/api/v1/fuel-expense', fuelExpense);
 app.use('/api/v1/remark', remark);
-app.use('/api/v1/labour-remark', labourRemarkRoute);
 app.use('/api/v1/order', orderRoute);
 app.use('/api/v1/order-assignment', orderAssignmentRoute);
 app.use('/api/v1/flower-order-assignment', flowerOrderRoute);
@@ -120,6 +119,7 @@ app.use('/api/v1/excess-km', excessKmRoute);
 app.use('/api/v1/notification', notificationRoute);
 app.use('/api/v1/payout', payoutRoute);
 app.use('/api/v1/daily-payouts', dailyPayoutsRoute);
+app.use('/api/v1/driver-notification', driverNotificationRoute);
 
 
 // start server

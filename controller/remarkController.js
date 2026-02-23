@@ -7,16 +7,16 @@ exports.createRemark = async (req, res) => {
     try {
         // Check if driver exists
         const driver = await Driver.findByPk(req.body.driver_id);
-        
+
         if (!driver) {
             return res.status(404).json({
                 success: false,
                 message: 'Driver not found'
             });
         }
-        
+
         const remark = await Remark.create(req.body);
-        
+
         res.status(201).json({
             success: true,
             message: 'Remark created successfully',
@@ -37,12 +37,12 @@ exports.getAllRemarks = async (req, res) => {
         const remarks = await Remark.findAll({
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'remarkDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
         });
-        
+
         res.status(200).json({
             success: true,
             message: 'Remarks retrieved successfully',
@@ -63,18 +63,18 @@ exports.getRemarkById = async (req, res) => {
         const remark = await Remark.findByPk(req.params.id, {
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'remarkDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number', 'vehicle_number']
             }]
         });
-        
+
         if (!remark) {
             return res.status(404).json({
                 success: false,
                 message: 'Remark not found'
             });
         }
-        
+
         res.status(200).json({
             success: true,
             message: 'Remark retrieved successfully',
@@ -96,12 +96,12 @@ exports.getRemarksByDriverId = async (req, res) => {
             where: { driver_id: req.params.driver_id },
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'remarkDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
         });
-        
+
         res.status(200).json({
             success: true,
             message: 'Remarks retrieved successfully',
@@ -120,7 +120,7 @@ exports.getRemarksByDriverId = async (req, res) => {
 exports.getRemarksByDateRange = async (req, res) => {
     try {
         const { start_date, end_date } = req.query;
-        
+
         const remarks = await Remark.findAll({
             where: {
                 date: {
@@ -129,12 +129,12 @@ exports.getRemarksByDateRange = async (req, res) => {
             },
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'remarkDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
         });
-        
+
         res.status(200).json({
             success: true,
             message: 'Remarks retrieved successfully',
@@ -153,7 +153,7 @@ exports.getRemarksByDateRange = async (req, res) => {
 exports.searchRemarks = async (req, res) => {
     try {
         const { query } = req.query;
-        
+
         const remarks = await Remark.findAll({
             where: {
                 [Op.or]: [
@@ -163,12 +163,12 @@ exports.searchRemarks = async (req, res) => {
             },
             include: [{
                 model: Driver,
-                as: 'driver',
+                as: 'remarkDriver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
         });
-        
+
         res.status(200).json({
             success: true,
             message: 'Remarks searched successfully',
@@ -187,16 +187,16 @@ exports.searchRemarks = async (req, res) => {
 exports.updateRemark = async (req, res) => {
     try {
         const remark = await Remark.findByPk(req.params.id);
-        
+
         if (!remark) {
             return res.status(404).json({
                 success: false,
                 message: 'Remark not found'
             });
         }
-        
+
         await remark.update(req.body);
-        
+
         res.status(200).json({
             success: true,
             message: 'Remark updated successfully',
@@ -215,16 +215,16 @@ exports.updateRemark = async (req, res) => {
 exports.deleteRemark = async (req, res) => {
     try {
         const remark = await Remark.findByPk(req.params.id);
-        
+
         if (!remark) {
             return res.status(404).json({
                 success: false,
                 message: 'Remark not found'
             });
         }
-        
+
         await remark.destroy();
-        
+
         res.status(200).json({
             success: true,
             message: 'Remark deleted successfully'
@@ -242,15 +242,15 @@ exports.deleteRemark = async (req, res) => {
 exports.getRemarksCountByDriver = async (req, res) => {
     try {
         const { start_date, end_date } = req.query;
-        
+
         let whereClause = {};
-        
+
         if (start_date && end_date) {
             whereClause.date = {
                 [Op.between]: [start_date, end_date]
             };
         }
-        
+
         const remarksCount = await Remark.findAll({
             where: whereClause,
             attributes: [
@@ -265,7 +265,7 @@ exports.getRemarksCountByDriver = async (req, res) => {
             group: ['driver_id'],
             order: [[sequelize.fn('COUNT', sequelize.col('id')), 'DESC']]
         });
-        
+
         res.status(200).json({
             success: true,
             message: 'Remarks count retrieved successfully',

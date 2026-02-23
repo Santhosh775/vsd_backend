@@ -11,7 +11,7 @@ const generateOrderId = async (customerName, orderReceivedDate, transaction) => 
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     const baseOrderId = `${name}_${day}-${month}-${year}`;
-    
+
     // Find existing orders with the same base order_id pattern
     const { Op } = require('sequelize');
     const existingOrders = await Order.findAll({
@@ -22,12 +22,12 @@ const generateOrderId = async (customerName, orderReceivedDate, transaction) => 
         },
         transaction
     });
-    
+
     // If no existing orders, return base order_id
     if (existingOrders.length === 0) {
         return baseOrderId;
     }
-    
+
     // Otherwise, append sequence number
     const sequenceNumber = existingOrders.length + 1;
     return `${baseOrderId}_${sequenceNumber}`;
@@ -85,7 +85,7 @@ const reduceInventory = async (orderItems, transaction) => {
             const numBoxesStr = String(item.num_boxes);
             const match = numBoxesStr.match(/^(\d+(?:\.\d+)?)(box|bag)?/i);
             const numBoxes = match ? parseFloat(match[1]) : 0;
-            
+
             if (numBoxes > 0) {
                 const inventoryItem = await Inventory.findOne({
                     where: {
@@ -93,7 +93,7 @@ const reduceInventory = async (orderItems, transaction) => {
                     },
                     transaction
                 });
-                
+
                 if (inventoryItem && inventoryItem.quantity >= numBoxes) {
                     await inventoryItem.update({
                         quantity: parseFloat(inventoryItem.quantity) - numBoxes
@@ -138,7 +138,7 @@ const restoreInventory = async (orderItems, transaction) => {
             const numBoxesStr = String(item.num_boxes);
             const match = numBoxesStr.match(/^(\d+(?:\.\d+)?)(box|bag)?/i);
             const numBoxes = match ? parseFloat(match[1]) : 0;
-            
+
             if (numBoxes > 0) {
                 const inventoryItem = await Inventory.findOne({
                     where: {
@@ -146,7 +146,7 @@ const restoreInventory = async (orderItems, transaction) => {
                     },
                     transaction
                 });
-                
+
                 if (inventoryItem) {
                     await inventoryItem.update({
                         quantity: parseFloat(inventoryItem.quantity) + numBoxes
@@ -192,17 +192,17 @@ const getOrderTypeForDB = (orderType) => {
 // Helper function to transform orders according to the specification
 const transformOrder = (order) => {
     const transformedOrder = order.toJSON();
-    
+
     if (transformedOrder.items) {
         transformedOrder.items = transformOrderItems(transformedOrder.items);
     }
-    
+
     return transformedOrder;
 };
 
 // Create a new order
 const createOrder = async (req, res) => {
-    const validationErrors = handleValidationErrors(req, res, () => {});
+    const validationErrors = handleValidationErrors(req, res, () => { });
     if (validationErrors && validationErrors.statusCode) {
         return validationErrors;
     }
@@ -245,7 +245,7 @@ const createOrder = async (req, res) => {
             const productIds = products
                 .map(product => product.productId)
                 .filter(productId => productId !== null && productId !== undefined);
-            
+
             const productMap = {};
             if (productIds.length > 0) {
                 const productRecords = await Product.findAll({
@@ -253,26 +253,26 @@ const createOrder = async (req, res) => {
                         pid: productIds
                     }
                 });
-                
+
                 productRecords.forEach(product => {
                     productMap[product.pid] = product;
                 });
             }
-            
+
             const orderItems = products.map((product) => {
                 const productDetails = productMap[product.productId];
-                
+
                 const netWeight = parseFloat(product.netWeight) || 0;
-                
+
                 let totalPrice = 0;
                 if (productDetails) {
                     const marketPrice = parseFloat(productDetails.current_price) || 0;
                     totalPrice = netWeight * marketPrice;
                 }
-                
+
                 // For local orders without detailed info, store only product and net weight
                 const hasDetailedInfo = product.numBoxes || product.packingType || product.grossWeight || product.boxWeight;
-                
+
                 return {
                     order_id: orderId,
                     product_id: product.productId || null,
@@ -288,7 +288,7 @@ const createOrder = async (req, res) => {
             });
 
             await OrderItem.bulkCreate(orderItems, { transaction: t });
-            
+
             // Reduce inventory based on order items
             await reduceInventory(orderItems, t);
         }
@@ -358,7 +358,7 @@ const getAllOrders = async (req, res) => {
 
 // Get order by ID
 const getOrderById = async (req, res) => {
-    const validationErrors = handleValidationErrors(req, res, () => {});
+    const validationErrors = handleValidationErrors(req, res, () => { });
     if (validationErrors && validationErrors.statusCode) {
         return validationErrors;
     }
@@ -402,7 +402,7 @@ const getOrderById = async (req, res) => {
 
 // Update order
 const updateOrder = async (req, res) => {
-    const validationErrors = handleValidationErrors(req, res, () => {});
+    const validationErrors = handleValidationErrors(req, res, () => { });
     if (validationErrors && validationErrors.statusCode) {
         return validationErrors;
     }
@@ -454,10 +454,10 @@ const updateOrder = async (req, res) => {
                 where: { order_id: order.order_id },
                 transaction: t
             });
-            
+
             // Restore inventory for existing items
             await restoreInventory(existingOrderItems, t);
-            
+
             await OrderItem.destroy({
                 where: { order_id: order.order_id }
             }, { transaction: t });
@@ -465,7 +465,7 @@ const updateOrder = async (req, res) => {
             const productIds = products
                 .map(product => product.productId)
                 .filter(productId => productId !== null && productId !== undefined);
-            
+
             const productMap = {};
             if (productIds.length > 0) {
                 const productRecords = await Product.findAll({
@@ -473,26 +473,26 @@ const updateOrder = async (req, res) => {
                         pid: productIds
                     }
                 });
-                
+
                 productRecords.forEach(product => {
                     productMap[product.pid] = product;
                 });
             }
-            
+
             const orderItems = products.map((product) => {
                 const productDetails = productMap[product.productId];
-                
+
                 const netWeight = parseFloat(product.netWeight) || 0;
-                
+
                 let totalPrice = 0;
                 if (productDetails) {
                     const marketPrice = parseFloat(productDetails.current_price) || 0;
                     totalPrice = netWeight * marketPrice;
                 }
-                
+
                 // For local orders without detailed info, store only product and net weight
                 const hasDetailedInfo = product.numBoxes || product.packingType || product.grossWeight || product.boxWeight;
-                
+
                 return {
                     order_id: order.order_id,
                     product_id: product.productId || null,
@@ -508,7 +508,7 @@ const updateOrder = async (req, res) => {
             });
 
             await OrderItem.bulkCreate(orderItems, { transaction: t });
-            
+
             // Reduce inventory for new order items
             await reduceInventory(orderItems, t);
         }
@@ -547,7 +547,7 @@ const updateOrder = async (req, res) => {
 
 // Delete order
 const deleteOrder = async (req, res) => {
-    const validationErrors = handleValidationErrors(req, res, () => {});
+    const validationErrors = handleValidationErrors(req, res, () => { });
     if (validationErrors && validationErrors.statusCode) {
         return validationErrors;
     }
@@ -567,7 +567,7 @@ const deleteOrder = async (req, res) => {
 
         // Check order type and delete related records accordingly
         const { OrderAssignment, FlowerOrderAssignment, LocalOrder } = require('../model/associations');
-        
+
         if (order.order_type === 'FLOWER ORDER') {
             // Delete flower order assignment
             await FlowerOrderAssignment.destroy({

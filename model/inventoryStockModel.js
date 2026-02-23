@@ -23,38 +23,13 @@ const InventoryStock = sequelize.define('InventoryStock', {
             key: 'id'
         }
     },
-    item_name: {
-        type: DataTypes.STRING,
+    items: {
+        type: DataTypes.JSON,
         allowNull: false
-    },
-    hsn_code: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    quantity: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
-    },
-    price_per_unit: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
-    },
-    gst_percentage: {
-        type: DataTypes.DECIMAL(5, 2),
-        allowNull: false,
-        defaultValue: 0
     },
     total_with_gst: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
-    },
-    inventory_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'inventories',
-            key: 'id'
-        }
     },
     date: {
         type: DataTypes.DATEONLY,

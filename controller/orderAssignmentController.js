@@ -1,5 +1,6 @@
 const { OrderAssignment, Order, OrderItem, Farmer, Supplier, ThirdParty, Labour, Driver, Stock } = require('../model/associations');
 const { sequelize } = require('../config/db');
+const { createDriverNotification } = require('./driverNotificationController');
 
 // Check if an assignment involves the given driver (by did or driver_id)
 const assignmentHasDriver = (assignment, driver) => {
@@ -280,7 +281,7 @@ const getOrderAssignment = async (req, res) => {
     }
 };
 
-// Update order assignment (Stage 1) - Store form data and summary from frontend
+// Update order assignment (Stage 1) - Store form data and summary from frontend (supports partial updates)
 const updateStage1Assignment = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -317,13 +318,13 @@ const updateStage1Assignment = async (req, res) => {
             });
         }
         
-        // Process product assignments with entity details
-        const processedAssignments = productAssignments.map(pa => ({
+        // Process product assignments with entity details (allow partial data)
+        const processedAssignments = (productAssignments || []).map(pa => ({
             id: pa.id,
             product: pa.product || pa.product_name,
-            entityType: pa.entityType,
-            entityId: pa.entityId,
-            assignedTo: pa.assignedTo,
+            entityType: pa.entityType || '',
+            entityId: pa.entityId || null,
+            assignedTo: pa.assignedTo || '',
             assignedQty: parseFloat(pa.assignedQty) || 0,
             assignedBoxes: parseInt(pa.assignedBoxes) || 0,
             price: parseFloat(pa.price) || 0,
@@ -332,18 +333,18 @@ const updateStage1Assignment = async (req, res) => {
             address: pa.address || ''
         }));
 
-        // Process delivery routes with driver and labour info
-        const processedRoutes = deliveryRoutes.map(route => ({
+        // Process delivery routes with driver and labour info (allow partial data)
+        const processedRoutes = (deliveryRoutes || []).map(route => ({
             routeId: route.routeId,
             sourceId: route.sourceId,
-            location: route.location,
-            address: route.address,
-            product: route.product,
+            location: route.location || '',
+            address: route.address || '',
+            product: route.product || '',
             quantity: parseFloat(route.quantity) || 0,
             assignedBoxes: parseInt(route.assignedBoxes) || 0,
             oiid: route.oiid,
-            entityType: route.entityType,
-            entityId: route.entityId,
+            entityType: route.entityType || '',
+            entityId: route.entityId || null,
             driver: route.driver || '',
             labour: route.labour || '',
             isRemaining: route.isRemaining || false
@@ -395,18 +396,39 @@ const updateStage1Assignment = async (req, res) => {
 
                 if (allCompleted) {
                     stage1Status = 'completed';
+                } else if (allAssignments.some(a => a.status && a.status.toLowerCase() !== 'pending')) {
+                    stage1Status = 'in_progress';
                 }
             }
         }
 
+        // Build update object - only update fields that are provided
+        const updateData = {};
+        if (orderType) updateData.order_type = orderType;
+        if (productAssignments) updateData.product_assignments = processedAssignments;
+        if (deliveryRoutes) updateData.delivery_routes = processedRoutes;
+        if (summaryData) updateData.stage1_summary_data = stage1SummaryData;
+        updateData.stage1_status = stage1Status;
+
         // Update assignment
-        await assignment.update({
-            order_type: orderType,
-            product_assignments: processedAssignments,
-            delivery_routes: processedRoutes,
-            stage1_summary_data: stage1SummaryData,
-            stage1_status: stage1Status
-        });
+        await assignment.update(updateData);
+
+        // Send a notification to each assigned driver
+        if (stage1SummaryData?.driverAssignments?.length) {
+            const orderLabel = order.order_id || `Order #${orderId}`;
+            for (const driverGroup of stage1SummaryData.driverAssignments) {
+                const driverDid = driverGroup.did ? parseInt(driverGroup.did) : null;
+                if (driverDid) {
+                    await createDriverNotification({
+                        did: driverDid,
+                        type: 'order_assigned',
+                        title: 'New Order Assigned',
+                        message: `You have been assigned to order ${orderLabel}. Please check your orders.`,
+                        reference_id: String(orderId)
+                    });
+                }
+            }
+        }
         
         res.status(200).json({ success: true, message: 'Stage 1 saved successfully', data: assignment });
     } catch (error) {
@@ -1419,8 +1441,6 @@ const getProductStock = async (req, res) => {
         });
     }
 };
-
-
 
 // Update stage1_summary_data status for driver app
 const updateStage1Status = async (req, res) => {

@@ -242,8 +242,8 @@ exports.validateAttendance = [
     body('status')
         .notEmpty()
         .withMessage('Status is required')
-        .isIn(['Present', 'Absent', 'Half Day'])
-        .withMessage('Status must be Present, Absent, or Half Day'),
+        .isIn(['Present', 'Absent', 'Half Day', 'Checked-Out', 'informed leave', 'uninformed leave', 'leave', 'voluntary leave', 'normal absent'])
+        .withMessage('Status must be Present, Absent, Half Day, Checked-Out, or Leave types'),
 
     body('check_in_time')
         .optional()
@@ -263,8 +263,8 @@ exports.validateAttendanceUpdate = [
 
     body('status')
         .optional()
-        .isIn(['Present', 'Absent', 'Half Day'])
-        .withMessage('Status must be Present, Absent, or Half Day'),
+        .isIn(['Present', 'Absent', 'Half Day', 'Checked-Out', 'informed leave', 'uninformed leave', 'leave', 'voluntary leave', 'normal absent'])
+        .withMessage('Status must be Present, Absent, Half Day, Checked-Out, or Leave types'),
 
     body('check_in_time')
         .optional()
@@ -276,4 +276,21 @@ exports.validateAttendanceUpdate = [
         .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
         .withMessage('Check-out time must be in HH:MM:SS format')
 ];
+
+exports.validateMarkAbsent = [
+    param('labour_id')
+        .isInt()
+        .withMessage('Labour ID must be an integer'),
+
+    body('date')
+        .optional()
+        .isISO8601()
+        .withMessage('Date must be a valid date'),
+
+    body('type')
+        .optional()
+        .isIn(['informed leave', 'uninformed leave', 'leave', 'voluntary leave', 'normal absent', 'Absent'])
+        .withMessage('Invalid absence type')
+];
+
 

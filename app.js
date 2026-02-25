@@ -78,6 +78,7 @@ const excessKmRoute = require('./router/excessKmRoute');
 const notificationRoute = require('./router/notificationRoute');
 const payoutRoute = require('./router/payoutRoute');
 const dailyPayoutsRoute = require('./router/dailyPayoutsRoute');
+const labourRemarkRoute = require('./router/labourRemarkRoute');
 const driverNotificationRoute = require('./router/driverNotificationRoute');
 
 
@@ -119,6 +120,7 @@ app.use('/api/v1/excess-km', excessKmRoute);
 app.use('/api/v1/notification', notificationRoute);
 app.use('/api/v1/payout', payoutRoute);
 app.use('/api/v1/daily-payouts', dailyPayoutsRoute);
+app.use('/api/v1/labour-remark', labourRemarkRoute);
 app.use('/api/v1/driver-notification', driverNotificationRoute);
 
 

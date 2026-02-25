@@ -593,7 +593,12 @@ exports.validateMarkAttendance = [
     body('remarks')
         .optional()
         .isLength({ max: 500 })
-        .withMessage('Remarks must be less than 500 characters')
+        .withMessage('Remarks must be less than 500 characters'),
+
+    body('type')
+        .optional()
+        .isIn(['informed leave', 'uninformed leave', 'leave', 'voluntary leave', 'normal absent', 'Absent'])
+        .withMessage('Invalid absence type')
 ];
 
 exports.validateBulkMarkAttendance = [
@@ -621,8 +626,8 @@ exports.validateBulkMarkAttendance = [
     body('attendance_status')
         .notEmpty()
         .withMessage('Attendance status is required')
-        .isIn(['Present', 'Absent'])
-        .withMessage('Attendance status must be Present or Absent')
+        .isIn(['Present', 'Absent', 'informed leave', 'uninformed leave', 'leave', 'voluntary leave', 'normal absent'])
+        .withMessage('Invalid attendance status')
 ];
 
 exports.validateAttendanceRemarks = [

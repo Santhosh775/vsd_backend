@@ -34,7 +34,7 @@ const AttendanceHistory = sequelize.define('AttendanceHistory', {
         comment: 'Check-out time (HH:MM:SS format)'
     },
     attendance_status: {
-        type: DataTypes.ENUM('Present', 'Absent', 'Not Marked'),
+        type: DataTypes.ENUM('Present', 'Absent', 'informed leave', 'uninformed leave', 'leave', 'voluntary leave', 'normal absent', 'Not Marked'),
         allowNull: false,
         defaultValue: 'Not Marked'
     },

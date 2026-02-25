@@ -590,6 +590,11 @@ exports.validateMarkAttendance = [
         .matches(/^\d{4}-\d{2}-\d{2}$/)
         .withMessage('Date must be in YYYY-MM-DD format'),
 
+    body('time')
+        .optional()
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/)
+        .withMessage('Time must be in HH:MM or HH:MM:SS format'),
+
     body('remarks')
         .optional()
         .isLength({ max: 500 })

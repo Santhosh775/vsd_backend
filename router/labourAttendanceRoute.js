@@ -50,4 +50,9 @@ router.get('/present-today',
     labourAttendanceController.getPresentLaboursToday
 );
 
+router.delete('/:attendance_id',
+    authMiddleware,
+    labourAttendanceController.deleteAttendanceRecord
+);
+
 module.exports = router;

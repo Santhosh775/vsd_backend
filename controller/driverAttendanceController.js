@@ -3,6 +3,18 @@ const Driver = require('../model/driverModel');
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/db');
 
+// Normalize time to HH:MM:SS (accepts HH:MM or HH:MM:SS)
+const normalizeTime = (timeStr) => {
+    if (!timeStr || typeof timeStr !== 'string') return null;
+    const trimmed = timeStr.trim();
+    if (/^\d{1,2}:\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+    if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
+        const [h, m] = trimmed.split(':');
+        return `${h.padStart(2, '0')}:${m.padStart(2, '0')}:00`;
+    }
+    return trimmed;
+};
+
 // Get attendance overview for a specific date
 exports.getAttendanceOverview = async (req, res) => {
     try {
@@ -102,7 +114,7 @@ exports.markCheckIn = async (req, res) => {
         const { date, time } = req.body;
 
         const attendanceDate = date || new Date().toISOString().split('T')[0];
-        const checkInTime = time || new Date().toTimeString().split(' ')[0];
+        const checkInTime = normalizeTime(time) || new Date().toTimeString().split(' ')[0];
 
         // Check if driver exists
         const driver = await Driver.findByPk(driver_id);
@@ -161,10 +173,12 @@ exports.markCheckIn = async (req, res) => {
 exports.markCheckOut = async (req, res) => {
     try {
         const { driver_id } = req.params;
-        const { date } = req.body;
+        const { date, time } = req.body;
 
         const attendanceDate = date || new Date().toISOString().split('T')[0];
-        const checkOutTime = new Date().toTimeString().split(' ')[0];
+        const checkOutTime = normalizeTime(time) || new Date().toTimeString().split(' ')[0];
+        const today = new Date().toISOString().split('T')[0];
+        const isToday = attendanceDate === today;
 
         // Check if driver exists
         const driver = await Driver.findByPk(driver_id);
@@ -202,10 +216,12 @@ exports.markCheckOut = async (req, res) => {
             check_out_time: checkOutTime
         });
 
-        // Update driver's current status
-        await driver.update({
-            logout_time: new Date()
-        });
+        // Update driver's current status only when marking for today (not for future dates)
+        if (isToday) {
+            await driver.update({
+                logout_time: new Date()
+            });
+        }
 
         res.status(200).json({
             success: true,
@@ -331,10 +347,12 @@ exports.updateCheckOutTime = async (req, res) => {
 exports.markPresent = async (req, res) => {
     try {
         const { driver_id } = req.params;
-        const { date } = req.body;
+        const { date, time } = req.body;
 
         const attendanceDate = date || new Date().toISOString().split('T')[0];
-        const checkInTime = new Date().toTimeString().split(' ')[0];
+        const checkInTime = normalizeTime(time) || new Date().toTimeString().split(' ')[0];
+        const today = new Date().toISOString().split('T')[0];
+        const isToday = attendanceDate === today;
 
         // Check if driver exists
         const driver = await Driver.findByPk(driver_id);
@@ -367,11 +385,13 @@ exports.markPresent = async (req, res) => {
             });
         }
 
-        // Update driver's current status
-        await driver.update({
-            login_time: new Date(),
-            attendance_status: 'Present'
-        });
+        // Update driver's current status only when marking for today (not for future dates)
+        if (isToday) {
+            await driver.update({
+                login_time: new Date(),
+                attendance_status: 'Present'
+            });
+        }
 
         res.status(200).json({
             success: true,
@@ -394,6 +414,8 @@ exports.markAbsent = async (req, res) => {
         const { date, remarks } = req.body;
 
         const attendanceDate = date || new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
+        const isToday = attendanceDate === today;
 
         // Check if driver exists
         const driver = await Driver.findByPk(driver_id);
@@ -428,12 +450,14 @@ exports.markAbsent = async (req, res) => {
             });
         }
 
-        // Update driver's current status
-        await driver.update({
-            attendance_status: req.body.type || 'Absent',
-            login_time: null,
-            logout_time: null
-        });
+        // Update driver's current status only when marking for today (not for future dates)
+        if (isToday) {
+            await driver.update({
+                attendance_status: req.body.type || 'Absent',
+                login_time: null,
+                logout_time: null
+            });
+        }
 
         res.status(200).json({
             success: true,

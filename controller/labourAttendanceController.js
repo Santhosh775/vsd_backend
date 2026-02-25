@@ -150,10 +150,10 @@ exports.markPresent = async (req, res) => {
 exports.markCheckOut = async (req, res) => {
     try {
         const { labour_id } = req.params;
-        const { date } = req.body;
+        const { date, time } = req.body;
 
         const attendanceDate = date || new Date().toISOString().split('T')[0];
-        const checkOutTime = new Date().toTimeString().split(' ')[0];
+        const checkOutTime = time || new Date().toTimeString().split(' ')[0];
 
         const labour = await Labour.findByPk(labour_id);
         if (!labour) {
@@ -430,6 +430,34 @@ exports.getPresentLaboursToday = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error fetching present labours',
+            error: error.message
+        });
+    }
+};
+
+exports.deleteAttendanceRecord = async (req, res) => {
+    try {
+        const { attendance_id } = req.params;
+
+        const attendance = await LabourAttendance.findByPk(attendance_id);
+
+        if (!attendance) {
+            return res.status(404).json({
+                success: false,
+                message: 'Attendance record not found'
+            });
+        }
+
+        await attendance.destroy();
+
+        res.status(200).json({
+            success: true,
+            message: 'Attendance record deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting attendance record',
             error: error.message
         });
     }

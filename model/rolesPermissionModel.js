@@ -40,6 +40,7 @@ const RolesPermission = sequelize.define('RolesPermission', {
     drivers_edit: { type: DataTypes.BOOLEAN, defaultValue: false },
     drivers_delete: { type: DataTypes.BOOLEAN, defaultValue: false },
     drivers_attendance: { type: DataTypes.BOOLEAN, defaultValue: false },
+    drivers_attendance_edit: { type: DataTypes.BOOLEAN, defaultValue: false },
     drivers_startkm_endkm: { type: DataTypes.BOOLEAN, defaultValue: false },
     drivers_localgradeorder: { type: DataTypes.BOOLEAN, defaultValue: false },
     drivers_boxorder: { type: DataTypes.BOOLEAN, defaultValue: false },
@@ -68,6 +69,7 @@ const RolesPermission = sequelize.define('RolesPermission', {
     labour_add: { type: DataTypes.BOOLEAN, defaultValue: false },
     labour_view: { type: DataTypes.BOOLEAN, defaultValue: false },
     labour_attendance: { type: DataTypes.BOOLEAN, defaultValue: false },
+    labour_attendance_edit: { type: DataTypes.BOOLEAN, defaultValue: false },
     labour_excesspay: { type: DataTypes.BOOLEAN, defaultValue: false },
     labour_dailypayout: { type: DataTypes.BOOLEAN, defaultValue: false },
     labour_edit: { type: DataTypes.BOOLEAN, defaultValue: false },
@@ -111,6 +113,7 @@ const RolesPermission = sequelize.define('RolesPermission', {
 
     reports_enabled: { type: DataTypes.BOOLEAN, defaultValue: false },
     reports_orderreports: { type: DataTypes.BOOLEAN, defaultValue: false },
+    reports_flowerorderreports: { type: DataTypes.BOOLEAN, defaultValue: false },
     reports_farmerreports: { type: DataTypes.BOOLEAN, defaultValue: false },
     reports_supplierreports: { type: DataTypes.BOOLEAN, defaultValue: false },
     reports_thirdpartyreports: { type: DataTypes.BOOLEAN, defaultValue: false },

@@ -37,7 +37,7 @@ exports.getAllRemarks = async (req, res) => {
         const remarks = await Remark.findAll({
             include: [{
                 model: Driver,
-                as: 'remarkDriver',
+                as: 'driver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
@@ -63,7 +63,7 @@ exports.getRemarkById = async (req, res) => {
         const remark = await Remark.findByPk(req.params.id, {
             include: [{
                 model: Driver,
-                as: 'remarkDriver',
+                as: 'driver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number', 'vehicle_number']
             }]
         });
@@ -96,7 +96,7 @@ exports.getRemarksByDriverId = async (req, res) => {
             where: { driver_id: req.params.driver_id },
             include: [{
                 model: Driver,
-                as: 'remarkDriver',
+                as: 'driver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
@@ -129,7 +129,7 @@ exports.getRemarksByDateRange = async (req, res) => {
             },
             include: [{
                 model: Driver,
-                as: 'remarkDriver',
+                as: 'driver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]
@@ -163,7 +163,7 @@ exports.searchRemarks = async (req, res) => {
             },
             include: [{
                 model: Driver,
-                as: 'remarkDriver',
+                as: 'driver',
                 attributes: ['did', 'driver_id', 'driver_name', 'phone_number']
             }],
             order: [['date', 'DESC']]

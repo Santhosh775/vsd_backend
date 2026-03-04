@@ -4,19 +4,6 @@ const Product = require('../model/productModel');
 const MultipleProductBox = require('../model/multipleProductBoxModel');
 const { Op } = require('sequelize');
 
-const parseJsonField = (field) => {
-    if (Array.isArray(field)) return field;
-    if (typeof field === 'string') {
-        try {
-            const parsed = JSON.parse(field);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch {
-            return [];
-        }
-    }
-    return [];
-};
-
 exports.createPreference = async (req, res) => {
     try {
         const { customer_id, product_id, multiple_product_box_id, enabled, display_order } = req.body;

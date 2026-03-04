@@ -276,7 +276,6 @@ CustomerProductPreference.belongsTo(MultipleProductBox, {
     foreignKey: 'multiple_product_box_id',
     as: 'multipleProductBox'
 });
-
 // Labour-LabourAttendance associations
 Labour.hasMany(LabourAttendance, {
     foreignKey: 'labour_id',

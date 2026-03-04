@@ -1,0 +1,185 @@
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
+
+const Driver = sequelize.define('Driver', {
+    did: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    driver_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    driver_name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+        validate: {
+            isEmail: true
+        }
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    phone_number: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    address: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    city: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    state: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    pin_code: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    license_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    license_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    vehicle_type: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    available_vehicle: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        comment: 'Specific vehicle name/model assigned to driver'
+    },
+    vehicle_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    vehicle_condition: {
+        type: DataTypes.ENUM('Excellent', 'Good', 'Average', 'Poor'),
+        allowNull: false,
+        defaultValue: 'Good'
+    },
+    capacity: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    insurance_number: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    insurance_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    pollution_certificate: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Pollution certificate number'
+    },
+    pollution_certificate_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    ka_permit: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'KA permit number'
+    },
+    ka_permit_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    delivery_type: {
+        type: DataTypes.ENUM('Local Pickups', 'Line Airport', 'Both Types'),
+        allowNull: false,
+    },
+    driver_image: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    license_image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload License Image'
+    },
+    driver_id_proof: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload ID Proof'
+    },
+    insurance_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload Insurance Document'
+    },
+    pollution_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload Pollution Certificate Document'
+    },
+    ka_permit_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload KA Permit Document'
+    },
+    status: {
+        type: DataTypes.ENUM('Available', 'On Trip', 'Break', 'Inactive'),
+        allowNull: false,
+        defaultValue: 'Available'
+    },
+    is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+        comment: 'Driver Status toggle (Active/Inactive)'
+    },
+    total_deliveries: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0
+    },
+    account_holder_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    bank_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    account_number: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    IFSC_code: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    branch_name: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
+}, {
+    tableName: 'drivers',
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
+});
+
+module.exports = Driver;

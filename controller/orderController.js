@@ -242,8 +242,9 @@ const createOrder = async (req, res) => {
         const order = await Order.create(orderData, { transaction: t });
 
         if (products && products.length > 0) {
+            // Support both legacy camelCase and new snake_case payloads from frontend
             const productIds = products
-                .map(product => product.productId)
+                .map(product => product.product_id ?? product.productId)
                 .filter(productId => productId !== null && productId !== undefined);
 
             const productMap = {};
@@ -260,30 +261,37 @@ const createOrder = async (req, res) => {
             }
 
             const orderItems = products.map((product) => {
-                const productDetails = productMap[product.productId];
+                const productId = product.product_id ?? product.productId;
+                const netWeightRaw = product.net_weight ?? product.netWeight;
+                const numBoxesRaw = product.num_boxes ?? product.numBoxes;
+                const packingTypeRaw = product.packing_type ?? product.packingType;
+                const grossWeightRaw = product.gross_weight ?? product.grossWeight;
+                const boxWeightRaw = product.box_weight ?? product.boxWeight;
 
-                const netWeight = parseFloat(product.netWeight) || 0;
+                const productDetails = productId != null ? productMap[productId] : null;
+
+                const netWeightForPrice = parseFloat(netWeightRaw) || 0;
 
                 let totalPrice = 0;
                 if (productDetails) {
                     const marketPrice = parseFloat(productDetails.current_price) || 0;
-                    totalPrice = netWeight * marketPrice;
+                    totalPrice = netWeightForPrice * marketPrice;
                 }
 
                 // For local orders without detailed info, store only product and net weight
-                const hasDetailedInfo = product.numBoxes || product.packingType || product.grossWeight || product.boxWeight;
+                const hasDetailedInfo = numBoxesRaw || packingTypeRaw || grossWeightRaw || boxWeightRaw;
 
                 return {
                     order_id: orderId,
-                    product_id: product.productId || null,
+                    product_id: productId || null,
                     product_name: productDetails ? productDetails.product_name : null,
                     market_price: productDetails ? productDetails.current_price : 0.00,
                     total_price: totalPrice,
-                    num_boxes: hasDetailedInfo ? product.numBoxes : null,
-                    packing_type: hasDetailedInfo ? product.packingType : null,
-                    net_weight: product.netWeight,
-                    gross_weight: hasDetailedInfo ? product.grossWeight : null,
-                    box_weight: hasDetailedInfo ? product.boxWeight : null
+                    num_boxes: hasDetailedInfo ? numBoxesRaw : null,
+                    packing_type: hasDetailedInfo ? packingTypeRaw : null,
+                    net_weight: netWeightRaw,
+                    gross_weight: hasDetailedInfo ? grossWeightRaw : null,
+                    box_weight: hasDetailedInfo ? boxWeightRaw : null
                 };
             });
 
@@ -462,8 +470,9 @@ const updateOrder = async (req, res) => {
                 where: { order_id: order.order_id }
             }, { transaction: t });
 
+            // Support both legacy camelCase and new snake_case payloads from frontend
             const productIds = products
-                .map(product => product.productId)
+                .map(product => product.product_id ?? product.productId)
                 .filter(productId => productId !== null && productId !== undefined);
 
             const productMap = {};
@@ -480,30 +489,37 @@ const updateOrder = async (req, res) => {
             }
 
             const orderItems = products.map((product) => {
-                const productDetails = productMap[product.productId];
+                const productId = product.product_id ?? product.productId;
+                const netWeightRaw = product.net_weight ?? product.netWeight;
+                const numBoxesRaw = product.num_boxes ?? product.numBoxes;
+                const packingTypeRaw = product.packing_type ?? product.packingType;
+                const grossWeightRaw = product.gross_weight ?? product.grossWeight;
+                const boxWeightRaw = product.box_weight ?? product.boxWeight;
 
-                const netWeight = parseFloat(product.netWeight) || 0;
+                const productDetails = productId != null ? productMap[productId] : null;
+
+                const netWeightForPrice = parseFloat(netWeightRaw) || 0;
 
                 let totalPrice = 0;
                 if (productDetails) {
                     const marketPrice = parseFloat(productDetails.current_price) || 0;
-                    totalPrice = netWeight * marketPrice;
+                    totalPrice = netWeightForPrice * marketPrice;
                 }
 
                 // For local orders without detailed info, store only product and net weight
-                const hasDetailedInfo = product.numBoxes || product.packingType || product.grossWeight || product.boxWeight;
+                const hasDetailedInfo = numBoxesRaw || packingTypeRaw || grossWeightRaw || boxWeightRaw;
 
                 return {
                     order_id: order.order_id,
-                    product_id: product.productId || null,
+                    product_id: productId || null,
                     product_name: productDetails ? productDetails.product_name : null,
                     market_price: productDetails ? productDetails.current_price : 0.00,
                     total_price: totalPrice,
-                    num_boxes: hasDetailedInfo ? product.numBoxes : null,
-                    packing_type: hasDetailedInfo ? product.packingType : null,
-                    net_weight: product.netWeight,
-                    gross_weight: hasDetailedInfo ? product.grossWeight : null,
-                    box_weight: hasDetailedInfo ? product.boxWeight : null
+                    num_boxes: hasDetailedInfo ? numBoxesRaw : null,
+                    packing_type: hasDetailedInfo ? packingTypeRaw : null,
+                    net_weight: netWeightRaw,
+                    gross_weight: hasDetailedInfo ? grossWeightRaw : null,
+                    box_weight: hasDetailedInfo ? boxWeightRaw : null
                 };
             });
 

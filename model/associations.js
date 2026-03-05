@@ -266,16 +266,9 @@ CustomerProductPreference.belongsTo(Product, {
     as: 'product'
 });
 
-// MultipleProductBox-CustomerProductPreference associations
-MultipleProductBox.hasMany(CustomerProductPreference, {
-    foreignKey: 'multiple_product_box_id',
-    as: 'customerPreferences'
-});
-
-CustomerProductPreference.belongsTo(MultipleProductBox, {
-    foreignKey: 'multiple_product_box_id',
-    as: 'multipleProductBox'
-});
+// NOTE: CustomerProductPreference currently only stores product-level preferences.
+// Any previous associations to MultipleProductBox via multiple_product_box_id
+// have been removed to match the current table schema.
 // Labour-LabourAttendance associations
 Labour.hasMany(LabourAttendance, {
     foreignKey: 'labour_id',

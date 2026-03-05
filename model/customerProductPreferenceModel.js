@@ -23,19 +23,6 @@ const CustomerProductPreference = sequelize.define('CustomerProductPreference', 
             key: 'pid'
         }
     },
-    multiple_product_box_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'multiple_product_boxes',
-            key: 'id'
-        }
-    },
-    item_type: {
-        type: DataTypes.ENUM('product', 'multiple_product_box'),
-        allowNull: false,
-        defaultValue: 'product'
-    },
     enabled: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

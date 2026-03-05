@@ -6,8 +6,6 @@ router.post('/preferences', preferenceController.createPreference);
 router.get('/preferences/customer/:customerId', preferenceController.getPreferencesByCustomer);
 router.put('/preferences/:customer_id/:product_id', preferenceController.updatePreference);
 router.delete('/preferences/:customer_id/:product_id', preferenceController.deletePreference);
-router.put('/preferences/:customer_id/box/:boxId', preferenceController.updatePreferenceForBox);
-router.delete('/preferences/:customer_id/box/:boxId', preferenceController.deletePreferenceForBox);
 router.post('/preferences/bulk', preferenceController.bulkUpdatePreferences);
 
 module.exports = router;

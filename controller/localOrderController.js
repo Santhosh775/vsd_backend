@@ -156,14 +156,14 @@ const saveLocalOrder = async (req, res) => {
 
         let localOrder = await LocalOrder.findOne({ where: { order_id: orderId }, transaction });
 
-        const processedAssignments = productAssignments.map(pa => ({
+        const processedAssignments = (productAssignments || []).map(pa => ({
             id: pa.id,
             product: pa.product || pa.product_name,
             entityType: pa.entityType,
             entityId: pa.entityId,
             assignedTo: pa.assignedTo,
             assignedQty: parseFloat(pa.assignedQty) || 0,
-            assignedBoxes: parseInt(pa.assignedBoxes) || 0,
+            pickedQuantity: parseFloat(pa.pickedQuantity ?? pa.pickedQty) || 0,
             price: parseFloat(pa.price) || 0,
             place: pa.place || '',
             tapeColor: pa.tapeColor || '',
@@ -171,14 +171,14 @@ const saveLocalOrder = async (req, res) => {
             productCount: pa.productCount != null ? pa.productCount : (pa.product_count != null ? pa.product_count : '')
         }));
 
-        const processedRoutes = deliveryRoutes.map(route => ({
+        const processedRoutes = (deliveryRoutes || []).map(route => ({
             routeId: route.routeId,
             sourceId: route.sourceId,
             location: route.location,
             address: route.address,
             product: route.product,
             quantity: parseFloat(route.quantity) || 0,
-            assignedBoxes: parseInt(route.assignedBoxes) || 0,
+            pickedQuantity: parseFloat(route.pickedQuantity ?? route.pickedQty) || 0,
             oiid: route.oiid,
             entityType: route.entityType,
             entityId: route.entityId,

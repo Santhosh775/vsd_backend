@@ -88,6 +88,15 @@ const Driver = sequelize.define('Driver', {
         type: DataTypes.DATEONLY,
         allowNull: true
     },
+    fitness_certificate: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        comment: 'Fitness certificate number'
+    },
+    fitness_certificate_expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false
+    },
     pollution_certificate: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -128,6 +137,11 @@ const Driver = sequelize.define('Driver', {
         type: DataTypes.STRING,
         allowNull: true,
         comment: 'Upload Insurance Document'
+    },
+    fitness_certificate_doc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Upload Fitness Certificate Document'
     },
     pollution_doc: {
         type: DataTypes.STRING,

@@ -39,6 +39,10 @@ exports.createDriver = async (req, res) => {
             const [month, day, year] = req.body.license_expiry_date.split('/');
             req.body.license_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         }
+        if (req.body.fitness_certificate_expiry_date && req.body.fitness_certificate_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.fitness_certificate_expiry_date.split('/');
+            req.body.fitness_certificate_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
         if (req.body.pollution_certificate_expiry_date && req.body.pollution_certificate_expiry_date.includes('/')) {
             const [month, day, year] = req.body.pollution_certificate_expiry_date.split('/');
             req.body.pollution_certificate_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -102,12 +106,28 @@ exports.createDriver = async (req, res) => {
                 message: 'Vehicle number already exists'
             });
         }
+
+        // FC details are mandatory for add driver flow
+        if (!req.body.fitness_certificate || !req.body.fitness_certificate.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fitness certificate is required'
+            });
+        }
+        if (!req.body.fitness_certificate_expiry_date || !req.body.fitness_certificate_expiry_date.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fitness certificate expiry date is required'
+            });
+        }
         
         // Hash password
         if (req.body.password) {
             const salt = await bcrypt.genSalt(10);
             req.body.password = await bcrypt.hash(req.body.password, salt);
         }
+
+        req.body.fitness_certificate = req.body.fitness_certificate.trim();
         
         // Handle file uploads
         if (req.files) {
@@ -122,6 +142,9 @@ exports.createDriver = async (req, res) => {
             }
             if (req.files.insurance_doc) {
                 req.body.insurance_doc = `/uploads/drivers/${req.files.insurance_doc[0].filename}`;
+            }
+            if (req.files.fitness_certificate_doc) {
+                req.body.fitness_certificate_doc = `/uploads/drivers/${req.files.fitness_certificate_doc[0].filename}`;
             }
             if (req.files.pollution_doc) {
                 req.body.pollution_doc = `/uploads/drivers/${req.files.pollution_doc[0].filename}`;
@@ -229,6 +252,10 @@ exports.updateDriver = async (req, res) => {
             const [month, day, year] = req.body.license_expiry_date.split('/');
             req.body.license_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         }
+        if (req.body.fitness_certificate_expiry_date && req.body.fitness_certificate_expiry_date.includes('/')) {
+            const [month, day, year] = req.body.fitness_certificate_expiry_date.split('/');
+            req.body.fitness_certificate_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
         if (req.body.pollution_certificate_expiry_date && req.body.pollution_certificate_expiry_date.includes('/')) {
             const [month, day, year] = req.body.pollution_certificate_expiry_date.split('/');
             req.body.pollution_certificate_expiry_date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -296,6 +323,36 @@ exports.updateDriver = async (req, res) => {
                 });
             }
         }
+
+        // Prevent clearing FC details in edit flow
+        if (Object.prototype.hasOwnProperty.call(req.body, 'fitness_certificate') && !String(req.body.fitness_certificate || '').trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fitness certificate is required'
+            });
+        }
+        if (Object.prototype.hasOwnProperty.call(req.body, 'fitness_certificate_expiry_date') && !String(req.body.fitness_certificate_expiry_date || '').trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fitness certificate expiry date is required'
+            });
+        }
+        if (!driver.fitness_certificate && !req.body.fitness_certificate) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fitness certificate is required'
+            });
+        }
+        if (!driver.fitness_certificate_expiry_date && !req.body.fitness_certificate_expiry_date) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fitness certificate expiry date is required'
+            });
+        }
+
+        if (req.body.fitness_certificate) {
+            req.body.fitness_certificate = req.body.fitness_certificate.trim();
+        }
         
         // Hash password if provided
         if (req.body.password) {
@@ -316,6 +373,9 @@ exports.updateDriver = async (req, res) => {
             }
             if (req.files.insurance_doc) {
                 req.body.insurance_doc = `/uploads/drivers/${req.files.insurance_doc[0].filename}`;
+            }
+            if (req.files.fitness_certificate_doc) {
+                req.body.fitness_certificate_doc = `/uploads/drivers/${req.files.fitness_certificate_doc[0].filename}`;
             }
             if (req.files.pollution_doc) {
                 req.body.pollution_doc = `/uploads/drivers/${req.files.pollution_doc[0].filename}`;

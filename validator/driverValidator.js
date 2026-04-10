@@ -83,6 +83,18 @@ exports.validateDriver = [
         .matches(/^\d{4}-\d{2}-\d{2}$/)
         .withMessage('Insurance expiry date must be in YYYY-MM-DD format'),
 
+    body('fitness_certificate')
+        .notEmpty()
+        .withMessage('Fitness certificate is required')
+        .isLength({ max: 50 })
+        .withMessage('Fitness certificate must be less than 50 characters'),
+
+    body('fitness_certificate_expiry_date')
+        .notEmpty()
+        .withMessage('Fitness certificate expiry date is required')
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Fitness certificate expiry date must be in YYYY-MM-DD format'),
+
     body('pollution_certificate')
         .optional({ checkFalsy: true })
         .isLength({ max: 50 })
@@ -212,6 +224,16 @@ exports.validateDriverUpdate = [
         .optional({ checkFalsy: true })
         .matches(/^\d{4}-\d{2}-\d{2}$/)
         .withMessage('Insurance expiry date must be in YYYY-MM-DD format'),
+
+    body('fitness_certificate')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 50 })
+        .withMessage('Fitness certificate must be less than 50 characters'),
+
+    body('fitness_certificate_expiry_date')
+        .optional({ checkFalsy: true })
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Fitness certificate expiry date must be in YYYY-MM-DD format'),
 
     body('pollution_certificate')
         .optional({ checkFalsy: true })

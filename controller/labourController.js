@@ -7,21 +7,30 @@ const { Op } = require('sequelize');
 const generateLabourId = async () => {
     const date = new Date();
     const year = date.getFullYear();
-    
-    // Get the count of labours created this year to determine the next sequence number
-    const yearStart = new Date(year, 0, 1);
-    const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
-    
-    const yearLabours = await Labour.count({
+
+    // Build next sequence from the highest existing ID for the current year.
+    // Count-based generation can create duplicates after deletes/manual IDs.
+    const yearPrefix = `LAB-${year}-`;
+    const yearLabours = await Labour.findAll({
+        attributes: ['labour_id'],
         where: {
-            createdAt: {
-                [Op.between]: [yearStart, yearEnd]
+            labour_id: {
+                [Op.like]: `${yearPrefix}%`
             }
         }
     });
-    
-    // Next sequence number (yearLabours count is 0-based, so we add 1)
-    const sequence = (yearLabours + 1).toString().padStart(3, '0');
+
+    let maxSequence = 0;
+    for (const labour of yearLabours) {
+        const labourId = labour.labour_id || '';
+        const sequencePart = labourId.slice(yearPrefix.length);
+        const parsed = Number.parseInt(sequencePart, 10);
+        if (Number.isInteger(parsed) && parsed > maxSequence) {
+            maxSequence = parsed;
+        }
+    }
+
+    const sequence = (maxSequence + 1).toString().padStart(3, '0');
     return `LAB-${year}-${sequence}`;
 };
 
@@ -29,8 +38,10 @@ const generateLabourId = async () => {
 exports.createLabour = async (req, res) => {
     try {
         // Generate labour ID if not provided
-        if (!req.body.labour_id) {
+        if (!req.body.labour_id || !req.body.labour_id.trim()) {
             req.body.labour_id = await generateLabourId();
+        } else {
+            req.body.labour_id = req.body.labour_id.trim();
         }
         
         // Check if labour_id already exists

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getPaidRecords, markAsPaid, getPayoutList } = require('../controller/payoutController');
+const { getPaidRecords, markAsPaid, markPartialPaid, unmarkAsPaid, getPayoutList } = require('../controller/payoutController');
 
 // Get all paid payouts (optional filter by type): GET /api/v1/payout/list?type=farmer
 router.get('/list', getPayoutList);
@@ -10,5 +10,7 @@ router.get('/:type/paid', getPaidRecords);
 
 // Mark a payout row as paid and store full row: POST /api/v1/payout/:type/mark-paid
 router.post('/:type/mark-paid', markAsPaid);
+router.post('/:type/partial-pay', markPartialPaid);
+router.post('/:type/unmark-paid', unmarkAsPaid);
 
 module.exports = router;

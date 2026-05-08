@@ -1289,9 +1289,13 @@ const getAssignmentOptions = async (req, res) => {
             attributes: ['tpid', 'third_party_name', 'address', 'city', 'state', 'pin_code', 'tape_color', 'available_stock']
         });
         
-        // Get all active labours
+        // Get live/active labours (supports legacy Active data).
         const labours = await Labour.findAll({
-            where: { status: 'Active' },
+            where: {
+                status: {
+                    [Op.in]: ['Live', 'Active']
+                }
+            },
             attributes: ['lid', 'full_name']
         });
         

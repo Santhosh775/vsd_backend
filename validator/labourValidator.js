@@ -1,4 +1,5 @@
 const { body, param, query } = require('express-validator');
+const LABOUR_STATUSES = ['Live', 'Terminated', 'Relieved', 'Relived', 'Active', 'Inactive', 'InActive'];
 
 exports.validateLabour = [
     body('full_name')
@@ -59,7 +60,7 @@ exports.validateLabour = [
 
     body('status')
         .optional()
-        .isIn(['Active', 'Inactive'])
+        .isIn(LABOUR_STATUSES)
         .withMessage('Invalid status'),
 
     body('account_holder_name')
@@ -143,7 +144,7 @@ exports.validateLabourUpdate = [
 
     body('status')
         .optional()
-        .isIn(['Active', 'Inactive'])
+        .isIn(LABOUR_STATUSES)
         .withMessage('Invalid status'),
 
     body('account_holder_name')

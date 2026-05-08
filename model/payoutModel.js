@@ -51,7 +51,7 @@ const Payout = sequelize.define('Payout', {
         defaultValue: 0
     },
     status: {
-        type: DataTypes.ENUM('pending', 'paid'),
+        type: DataTypes.ENUM('pending', 'partial', 'paid'),
         allowNull: false,
         defaultValue: 'paid',
         comment: 'Stored records are paid when created via mark-paid'

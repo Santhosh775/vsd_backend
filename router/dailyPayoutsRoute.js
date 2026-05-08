@@ -3,6 +3,8 @@ const router = express.Router();
 const {
     getPaidRecords,
     markAsPaid,
+    markPartialPaid,
+    unmarkAsPaid,
     getPayoutList
 } = require('../controller/dailyPayoutsController');
 
@@ -14,5 +16,7 @@ router.get('/:type/paid', getPaidRecords);
 
 // Mark a daily payout row as paid and store full row data
 router.post('/:type/mark-paid', markAsPaid);
+router.post('/:type/partial-pay', markPartialPaid);
+router.post('/:type/unmark-paid', unmarkAsPaid);
 
 module.exports = router;

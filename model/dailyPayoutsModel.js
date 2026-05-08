@@ -33,7 +33,7 @@ const DailyPayout = sequelize.define('DailyPayout', {
         defaultValue: 0
     },
     status: {
-        type: DataTypes.ENUM('pending', 'paid'),
+        type: DataTypes.ENUM('pending', 'partial', 'paid'),
         allowNull: false,
         defaultValue: 'paid',
         comment: 'Stored when user clicks Pay'

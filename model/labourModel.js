@@ -56,9 +56,9 @@ const Labour = sequelize.define('Labour', {
         allowNull: false
     },
     status: {
-        type: DataTypes.ENUM('Active', 'InActive'),
+        type: DataTypes.ENUM('Live', 'Terminated', 'Relieved', 'Active', 'InActive', 'Inactive'),
         allowNull: false,
-        defaultValue: 'Active'
+        defaultValue: 'Live'
     },
     profile_image: {
         type: DataTypes.STRING,

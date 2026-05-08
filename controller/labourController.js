@@ -2,6 +2,14 @@ const Labour = require('../model/labourModel');
 const LabourExcessPay = require('../model/labourExcessPayModel');
 const LabourRate = require('../model/labourRateModel');
 const { Op } = require('sequelize');
+const normalizeLabourStatus = (value) => {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return undefined;
+    if (raw === 'live' || raw === 'active') return 'Live';
+    if (raw === 'terminated') return 'Terminated';
+    if (raw === 'relieved' || raw === 'relived' || raw === 'inactive') return 'Relieved';
+    return value;
+};
 
 // Function to generate labour ID with sequential numbering
 const generateLabourId = async () => {
@@ -43,6 +51,7 @@ exports.createLabour = async (req, res) => {
         } else {
             req.body.labour_id = req.body.labour_id.trim();
         }
+        req.body.status = normalizeLabourStatus(req.body.status) || 'Live';
         
         // Check if labour_id already exists
         const existingLabourById = await Labour.findOne({
@@ -193,6 +202,9 @@ exports.updateLabour = async (req, res) => {
                 message: 'Labour ID cannot be changed'
             });
         }
+        if (req.body.status != null) {
+            req.body.status = normalizeLabourStatus(req.body.status);
+        }
         
         // Check if mobile number already exists (if provided and different from current)
         if (req.body.mobile_number && req.body.mobile_number !== labour.mobile_number) {
@@ -315,7 +327,11 @@ exports.getLabourStats = async (req, res) => {
         const totalLabours = await Labour.count();
         
         const activeLabours = await Labour.count({
-            where: { status: 'Active' }
+            where: {
+                status: {
+                    [Op.in]: ['Live', 'Active']
+                }
+            }
         });
         
         const pendingPayouts = 0;
